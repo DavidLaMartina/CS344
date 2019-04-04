@@ -49,22 +49,6 @@
 #       
 
 ################################################################################
-# Function: execute()
-# Description:
-#   execute() assesses arguments passed to matrix and, if those arguments are
-#   of the proper type, readability, and dimensions, calls the appropriate
-#   matrix function.
-################################################################################
-
-function test(){
-    echo $1
-    echo $2
-    echo $3
-
-    exit 0
-}
-
-################################################################################
 # argsReadable():
 #   Verifies readability of arguments
 # Input:
@@ -104,6 +88,37 @@ function argsNum(){
         exit 1
     fi
 }
+
+################################################################################
+# divNearest():
+#   Divides arg 1 by arg 2 and returns rounded result
+# Input:
+#   2 integer arguments, 1st to be divided by second
+# Output:
+#   Rounded result of division. Positive results round up at 0.5, negative down.
+################################################################################
+function divNearest(){
+    echo $(( ($1 + ($2 / 2) * ( ($1 > 0) * 2 - 1 )) / $2))
+}
+
+################################################################################
+# average():
+#   Finds average of indefinite number of integer arguments
+# Input:
+#   Indefinite number of integer arguments
+# Output:
+#   Rounded average - rounding performed by divNearest()
+################################################################################
+function average(){
+    sum=0
+    numArgs=0
+    for num in "$@"; do
+        sum=$(($sum + num))
+        numArgs=$(($numArgs + 1))
+    done
+    echo $(divNearest $sum $numArgs)
+}
+
 ################################################################################
 # dims():
 #   Outputs the dimensions of a matrix in 'ROWS COLUMNS' format.
@@ -153,6 +168,20 @@ function transpose(){
         done
     fi
 }
+
+################################################################################
+# mean():
+#   Given MxN matrix, outputs a 1xN vector, each element of which is the mean
+#   of its associated column in the original matrix
+# Input:
+#   One rectangular matrix of integers
+# Output:
+#   1xN (1 x number of columns) vector representing means of original columns
+################################################################################
+function mean(){
+    echo $(average 4 5 6 7 8 9 10)
+}
+
 
 ################################################################################
 # add():

@@ -55,15 +55,27 @@
 #   of the proper type, readability, and dimensions, calls the appropriate
 #   matrix function.
 ################################################################################
-execute(){
 
+function test(){
+    echo $1
+    echo $2
+    echo $3
 
+    exit 0
+}
 
-
-
-
-
-
+datafilepath="datafile$$"
+if [ "$#" = "1" ]
+then
+    cat > "$datafilepath"
+    $1 $datafilepath
+elif [ "$#" = "2" ]
+then
+    datafilepath=$2
+    $1 $datafilepath
+else
+    $1 "${@:2}"
+fi
 
 
 

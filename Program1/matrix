@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# CS344 Program 1
+# David LaMartina
+# lamartid@oregonstate.edu
+# Due April 22, 2019
+
+# Overview:
+#   Basic matrix operations
+# Specifications
+#   dims: print dimensions as ROWS COLUMNS
+#   transpose: reflect elements along main diagonal (MxN becomes NxM)
+#   mean: accept MxN matrix, return 1xN row vector
+#   add: two MxN matrices, add together element-wise
+#   multiply: MxN matrix and NxP matrix mult'd to produce MxP matrix (not commutative)
+#
+#   Check number and format of arguments (is file readable)
+#       ***NOT required to test whether input is valid***
+#   Valid matrix:
+#       tab-delimited table w/ at least one element
+#       each element signed integer
+#       every entry defined
+#       rectangular
+#   Invalid:
+#       empty
+#       file entry on row followed by tab
+#       matrix w/ empty lines
+#       matrix w/ any elements left blank / non-integer
+#   Output
+#       valid input: only output to stoud -- return value 0
+#       invalid input: only output to stderr -- return anything but 0 w/ some error msg
+#       All values and results are integers
+#   Temporary Files - recommended over arrays
+#       put in current working directory
+#       use ProcID as part of name ($$)
+#       Remove all temp files when done
+#       Use trap command to catch interrupt, hangup, terminate signals
+#   Rounding
+#       For average, round to nearest integer, away from 0 (up positive, down negative)
+#       (a + (b/2)*( (a>0)*2-1 )) / b
+#   Hints
+#       Write each part as separate function and call with argument reference
+#           $1 "${@:2}" would expand to multiply m1 m2 for 'matrix multiply m1 m2'
+#           call at bottom of script
+#       Use read command extensively to read from file
+#           reads ONE line at a time from stdin buffer and stores line in variable REPLY
+#           usually used in while loop, file directed to stdin of while loop
+#       expr command and shell can conflict over special characters --> need \
+#       
+
+################################################################################
+# Function: execute()
+# Description:
+#   execute() assesses arguments passed to matrix and, if those arguments are
+#   of the proper type, readability, and dimensions, calls the appropriate
+#   matrix function.
+################################################################################
+execute(){
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

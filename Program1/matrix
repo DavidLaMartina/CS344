@@ -64,6 +64,15 @@ function test(){
     exit 0
 }
 
+################################################################################
+# argsReadable():
+#   Verifies readability of arguments
+# Input:
+#   Series of argumentes of indefinite length
+# Output:
+#   If all args are readable, exit 0
+#   If any arg is unreadable, exit 1 with error message
+################################################################################
 function argsReadable(){
     for arg in $@; do
         if ! [[ -r $arg ]]; then
@@ -72,6 +81,28 @@ function argsReadable(){
         fi
     done
     exit 0
+}
+################################################################################
+# argsNum(): 
+#   Verifies a correct number of arguments
+# Input:
+#   First arg: correct number of arguments
+#   Subsequent args: arguments passed in to be counted
+# Output:
+#   Exit 0 if number of arguments from 2 upward matches the first argument
+#   Exit 1 with error message if discrepancy
+################################################################################
+function argsNum(){
+    numArgs=0
+    for arg in ${@:2}; do
+        numArgs=$(($numArgs + 1))
+    done
+    if [ $numArgs -eq $1 ]; then
+        exit 0
+    else
+        echo "You have entered an incorrect number of arguments"
+        exit 1
+    fi
 }
 ################################################################################
 # dims():
@@ -83,8 +114,7 @@ function argsReadable(){
 #   Exits 1 with error message args > 1 or input is unreadable
 ################################################################################
 function dims(){
-    if ! ([ "$#" = "1" ] && argsReadable ${@:1}); then
-        echo "Bad args"
+    if ! (argsNum 1 ${@:1} && argsReadable ${@:1}); then
         exit 1
     else
         rows=0; cols=0;
@@ -95,9 +125,39 @@ function dims(){
             cols=$(($cols + 1))
         done
         echo "$rows $cols"
+        exit 0
+    fi
+}
+################################################################################
+# transpose():
+#   'Reflects' elements of a matrix along its main (top-left to bottom-right)
+# Input:
+#   One rectangular matrix of integers
+# Output:
+#   Echos reflected matrix if valid.
+#   Exits 1 with ereror message if args > 1 or input is unreadable
+################################################################################
+function transpose(){
+    if ! (argsNum 1 ${@:1} && argsReadable ${@:1}); then
+        exit 1
+    else
+        # Iterate through fields, using index to grab column. Transpose one
+        # column at a time and output with paste single-line option to retain
+        # appropriate tabs and new lines.
+        # Solution using paste courtesy of
+        # https://www.thelinuxrain.com/articles/transposing-rows-and-columns-3-methods
+        idx=0
+        for item in $(cat $1 | head -n 1); do
+            idx=$((idx + 1))
+            cut -f $idx $1 | paste -s
+        done
     fi
 }
 
+################################################################################
+# add():
+#   Outputs 
+################################################################################
 
 
 function add(){

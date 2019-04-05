@@ -120,6 +120,22 @@ function average(){
 }
 
 ################################################################################
+# getNumCols():
+#   Find number of columns in a matrix
+# Input:
+#   Rectangular matrix
+# Output:
+#   Number of columns
+################################################################################
+function getNumCols(){
+    colCount=0
+        for col in $(cat $1 | head -n 1); do
+            colCount=$(($colCount + 1)); done
+    echo $colCount
+}
+
+
+################################################################################
 # dims():
 #   Outputs the dimensions of a matrix in 'ROWS COLUMNS' format.
 # Input:
@@ -179,24 +195,67 @@ function transpose(){
 #   1xN (1 x number of columns) vector representing means of original columns
 ################################################################################
 function mean(){
-    echo $(average 4 5 6 7 8 9 10)
+    if ! (argsNum 1 ${@:1} && argsReadable ${@:1}); then
+        exit 1
+    else
+        # Get count of columns for summation and averaging
+        colCount=0
+        for col in $(cat $1 | head -n 1); do
+            colCount=$(($colCount + 1)); done
+        # Sum each column and average
+        for ((i=1; i<=$colCount; i++)); do
+            sum=0
+            for num in $(cut -f $i $1); do
+                sum=$(($sum + $num)); done
+            average=$(divNearest $sum $colCount)
+            # Print average and tab unless last column; then print new line
+            if (($i < $colCount)); then
+                printf "%d\t" $average
+            else
+                printf "%d\n" $average
+            fi
+        done
+    fi
+    exit 0
 }
-
 
 ################################################################################
 # add():
-#   Outputs 
+#   Element-wise addition of two MxN matrices
+# Input:
+#   Two matrices of equal dimensions
+# Output:
+#   If valid input, MxN matrix representing addition of originals
+#   If invalid input, exit 1 with error message
 ################################################################################
-
-
 function add(){
-    if [[ "$#" -eq "1" && -r "$1" ]]
-    then
-        stuff
-    else
-        echo "Check your arguments."
+    # Verify correct number and readability of arguments
+    if ! (argsNum 2 ${@:1} && argsReadable ${@:1}); then
         exit 1
+    # Verify matrices are same size
+    elif ! ([ "$(dims $1)" = "$(dims $2)" ]); then
+        echo "matrix add requires 2 matrices of the same size."
+        exit 1
+    else
+        temp1="temp1$$"
+        temp2="temp2$$"
+        # Iterate through cols and rows to get & add each element of each matrix
+        numRows=$(wc -l < $1)
+        numCols=$(getNumCols $1)
+        for ((i=1; i<=$numRows; i++)); do
+            #line1=$(cat $1 | head -$i | tail -1)
+            #line2=$(cat $2 | head -$i | tail -1)
+            cat $1 | head -$i | tail -1 > $temp1
+            cat $2 | head -$i | tail -1 > $temp2
+            for ((j=1; j<=$numCols; j++)); do
+                num1=$(cut -f $j $temp1)
+                num2=$(cut -f $j $temp2)
+            done
+        done
+
+        rm -f $temp1 $temp2
     fi
+    exit 0
 }
 
 

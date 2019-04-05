@@ -12,6 +12,9 @@
 #   add
 #   multiply
 
+# Ensure all temp files are deleted; all temps include procID
+trap "rm -f *$$*; echo; echo 'CTRL-C received, exiting'; exit 1" INT HUP TERM
+
 ################################################################################
 # argsReadable():
 #   Verifies readability of arguments

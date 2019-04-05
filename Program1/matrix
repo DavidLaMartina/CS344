@@ -237,27 +237,91 @@ function add(){
         echo "matrix add requires 2 matrices of the same size."
         exit 1
     else
+        # Temp files for storing 1 row at a time from each matrix
         temp1="temp1$$"
         temp2="temp2$$"
-        # Iterate through cols and rows to get & add each element of each matrix
+        # Get numbers of rows & cols to use indexed for loop --> 
+        # allows program to grab both matrices' values in same loop
         numRows=$(wc -l < $1)
         numCols=$(getNumCols $1)
         for ((i=1; i<=$numRows; i++)); do
-            #line1=$(cat $1 | head -$i | tail -1)
-            #line2=$(cat $2 | head -$i | tail -1)
+            # Grab nth row of each matrix. Store as file to enable cut
             cat $1 | head -$i | tail -1 > $temp1
             cat $2 | head -$i | tail -1 > $temp2
+            # Field from each row contains only element of interest for sum
             for ((j=1; j<=$numCols; j++)); do
                 num1=$(cut -f $j $temp1)
                 num2=$(cut -f $j $temp2)
+                sum=$(($num1 + $num2))
+                # If not last col, add tab; otherwise add newline
+                if (($j < $numCols)); then
+                    printf "%d\t" $sum
+                else
+                    printf "%d\n" $sum
+                fi    
             done
         done
-
         rm -f $temp1 $temp2
     fi
     exit 0
 }
 
+################################################################################
+# multiply():
+#   Multiply MxN and NxP matrices
+# Input:
+#   MxN and NxP rectangular integer matrices (numCols of 1st arg == numRows 2nd)
+# Output:
+#   If valid input, result of matrix multiplication
+#   If invalid input, exit 1 with error message
+################################################################################
+function multiply(){
+    # Verify correct number and readability of arguments
+    if ! (argsNum 2 ${@:1} && argsReadable ${@:1}); then
+        exit 1
+    # Verify multiplication-compatible dimensions
+    elif ! ([ "$(getNumCols $1)" = "$(wc -l < $2)" ]); then
+        echo "matrix multiply requires MxN and NxP matrices"
+        exit 1
+    else
+        # Temp row for 1st matrix and temp col for 2nd matrix
+        tempRow1="tempRow1$$"
+        tempCol2="tempCol2$$"
+        # Need numRows from 1st matrix and numCols from 2nd
+        numRows1=$(wc -l < $1)
+        numCols2=$(getNumCols $2)
+        # Iterate by row of 1st matrix
+        for ((i=1; i<=numRows1; i++)); do
+            cat $1 | head -$i | tail -1 > $tempRow1
+            # Iterate by columns of 2nd matrix; new sum for each column
+            for ((j=1; j<=numCols2; j++)); do
+                itemCount=1 # Need item count to grab correct number from row
+                sum=0
+                cut -f $j $2 > $tempCol2
+                while read colNum; do
+                    rowNum=$(cut -f $itemCount $tempRow1)
+#                    echo "rowNum: $rowNum, colNum: $colNum"
+                    sum=$(($sum + ($rowNum * $colNum)))
+                    itemCount=$(($itemCount + 1))
+                done < $tempCol2
+                # If not last col, add tab; otherwise add newline
+                if (($j < $numCols2)); then
+                    printf "%d\t" $sum
+                else
+                    printf "%d\n" $sum
+                fi
+            done
+        done
+        rm -f $tempRow1
+        rm -f $tempCol2
+    fi
+    exit 0
+}
+
+################################################################################
+# matrix entry: Use temporary datafile to read in from either stdin or file.
+#   
+################################################################################
 
 datafilepath="datafile$$"
 if [ "$#" = "1" ]

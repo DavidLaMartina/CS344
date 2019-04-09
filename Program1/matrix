@@ -13,7 +13,7 @@
 #   multiply
 
 # Ensure all temp files are deleted; all temps include procID
-trap "rm -f *$$*; echo; echo 'CTRL-C received, exiting'; exit 1" INT HUP TERM
+trap "rm -f *$$*" INT HUP TERM EXIT
 
 ################################################################################
 # argsReadable():
@@ -27,7 +27,7 @@ trap "rm -f *$$*; echo; echo 'CTRL-C received, exiting'; exit 1" INT HUP TERM
 function argsReadable(){
     for arg in $@; do
         if ! [[ -r $arg ]]; then
-            echo "Check your arguments. $arg is not readable"
+            echo "Check your arguments. $arg is not readable" >&2
             exit 1
         fi
     done
@@ -51,7 +51,7 @@ function argsNum(){
     if [ $numArgs -eq $1 ]; then
         exit 0
     else
-        echo "You have entered an incorrect number of arguments"
+        echo "You have entered an incorrect number of arguments" >&2
         exit 1
     fi
 }
@@ -112,7 +112,7 @@ function getNumCols(){
 #   Exits 1 with error message args > 1 or input is unreadable
 ################################################################################
 function dims(){
-    if ! (argsNum 1 ${@:1} && argsReadable ${@:1}); then
+    if ! ((argsNum 1 ${@:1}) && (argsReadable ${@:1})); then
         exit 1
     else
         rows=0; cols=0;
@@ -136,7 +136,7 @@ function dims(){
 #   Exits 1 with ereror message if args > 1 or input is unreadable
 ################################################################################
 function transpose(){
-    if ! (argsNum 1 ${@:1} && argsReadable ${@:1}); then
+    if ! ((argsNum 1 ${@:1}) && (argsReadable ${@:1})); then
         exit 1
     else
         # Iterate through fields, using index to grab column. Transpose one
@@ -162,19 +162,21 @@ function transpose(){
 #   1xN (1 x number of columns) vector representing means of original columns
 ################################################################################
 function mean(){
-    if ! (argsNum 1 ${@:1} && argsReadable ${@:1}); then
+    if ! ((argsNum 1 ${@:1}) && (argsReadable ${@:1})); then
         exit 1
     else
         # Get count of columns for summation and averaging
-        colCount=0
-        for col in $(cat $1 | head -n 1); do
-            colCount=$(($colCount + 1)); done
+        numRows=$(wc -l < $1)
+        colCount=$(getNumCols $1)
+        #colCount=0
+        #for col in $(cat $1 | head -n 1); do
+        #    colCount=$(($colCount + 1)); done
         # Sum each column and average
         for ((i=1; i<=$colCount; i++)); do
             sum=0
             for num in $(cut -f $i $1); do
                 sum=$(($sum + $num)); done
-            average=$(divNearest $sum $colCount)
+            average=$(divNearest $sum $numRows)
             # Print average and tab unless last column; then print new line
             (($i < $colCount)) && char="\t" || char="\n"
             echo -e -n "$average$char"
@@ -194,11 +196,11 @@ function mean(){
 ################################################################################
 function add(){
     # Verify correct number and readability of arguments
-    if ! (argsNum 2 ${@:1} && argsReadable ${@:1}); then
+    if ! ((argsNum 2 ${@:1}) && (argsReadable ${@:1})); then
         exit 1
     # Verify matrices are same size
     elif ! ([ "$(dims $1)" = "$(dims $2)" ]); then
-        echo "matrix add requires 2 matrices of the same size."
+        echo "matrix add requires 2 matrices of the same size." >&2
         exit 1
     else
         # Temp files for storing 1 row at a time from each matrix
@@ -238,11 +240,11 @@ function add(){
 ################################################################################
 function multiply(){
     # Verify correct number and readability of arguments
-    if ! (argsNum 2 ${@:1} && argsReadable ${@:1}); then
+    if ! ((argsNum 2 ${@:1}) && (argsReadable ${@:1})); then
         exit 1
     # Verify multiplication-compatible dimensions
     elif ! ([ "$(getNumCols $1)" = "$(wc -l < $2)" ]); then
-        echo "matrix multiply requires MxN and NxP matrices"
+        echo "matrix multiply requires MxN and NxP matrices" >&2
         exit 1
     else
         # Temp row for 1st matrix and temp col for 2nd matrix
@@ -285,26 +287,19 @@ datafilepath="datafile$$"
 if [ "$#" = "1" ]
 then
     cat > "$datafilepath"
-    $1 $datafilepath
+    if ! ($1 $datafilepath); then
+        exit 1
+    fi
 elif [ "$#" = "2" ]
 then
     datafilepath=$2
-    $1 $datafilepath
+    if ! ($1 $datafilepath); then
+        exit 1
+    fi
 else
-    $1 "${@:2}"
+    if ! ($1 "${@:2}"); then
+        exit 1
+    fi
 fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+rm -f *$$*
+exit 0

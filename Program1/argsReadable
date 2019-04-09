@@ -1,0 +1,12 @@
+#!/bin/bash
+
+function argsReadable(){
+    for arg in $@; do
+        if ! [[ -r $arg ]]; then
+            echo "Check your arguments. $arg is not readable."
+            exit 1
+        fi
+    done
+    exit 0
+}
+argsReadable ${@:1}

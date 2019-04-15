@@ -1,0 +1,39 @@
+Requirements
+    1. be called mypython.py
+    2. Create 3 files in same dir as script, each w/ diff name
+        files remain after script executes
+        each file contains 10 random lowercase characters, no spaces
+        final (11th) character of each file MUST be newline
+            running wc (wordcount bash utility) against it must return 11
+    3. When executed, output sent to stdout should first print contents of 3
+        files it is creating in exactly format below:
+
+            $ python mypython.py
+            asdfhjkler
+            wersdaiuas
+            asdfasderr
+            8
+            10
+            80
+
+    4. After file contents of all three files have been printed, print two
+        random integeres on separate line (range from 1 to 42, inclusive)
+    5. On last (6th) line, print out product of two numbers
+
+    ***Do NOT have to parse and read data back in from files from step 2 to
+       complete step 3 - just dump contents already generated onto screen
+
+    look into sys.stdout.write() for outputting text to control newlines
+
+    Graders check for above requirements
+
+    No help from instructors or TA
+
+    Python not covered on final
+
+Hints
+    develop on os1
+
+Turning in
+    just the script
+    make comments in the script itself

@@ -33,6 +33,7 @@ function argsReadable(){
     done
     exit 0
 }
+
 ################################################################################
 # argsNum(): 
 #   Verifies a correct number of arguments
@@ -55,6 +56,7 @@ function argsNum(){
         exit 1
     fi
 }
+
 
 ################################################################################
 # divNearest():
@@ -83,7 +85,6 @@ function getNumCols(){
     echo $colCount
 }
 
-
 ################################################################################
 # dims():
 #   Outputs the dimensions of a matrix in 'ROWS COLUMNS' format.
@@ -108,6 +109,7 @@ function dims(){
         exit 0
     fi
 }
+
 ################################################################################
 # transpose():
 #   'Reflects' elements of a matrix along its main (top-left to bottom-right)
@@ -262,9 +264,10 @@ function multiply(){
 
 ################################################################################
 # matrix entry: Use temporary datafile to read in from either stdin or file.
-#   
+#   If 1 argument, attempt to read from stdin and execute - exit 1 if fail
+#   If 2 arguments, attempt to execute using 'matrix arg1 arg2' - exit 1 if fail
+#   If >2 args, attempt to execute using 'matrix arg1 arg2 arg3' - exit 1 if fail
 ################################################################################
-
 datafilepath="datafile$$"
 if [ "$#" = "1" ]
 then

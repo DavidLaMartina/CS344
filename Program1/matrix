@@ -69,24 +69,6 @@ function divNearest(){
 }
 
 ################################################################################
-# average():
-#   Finds average of indefinite number of integer arguments
-# Input:
-#   Indefinite number of integer arguments
-# Output:
-#   Rounded average - rounding performed by divNearest()
-################################################################################
-function average(){
-    sum=0
-    numArgs=0
-    for num in "$@"; do
-        sum=$(($sum + num))
-        numArgs=$(($numArgs + 1))
-    done
-    echo $(divNearest $sum $numArgs)
-}
-
-################################################################################
 # getNumCols():
 #   Find number of columns in a matrix
 # Input:

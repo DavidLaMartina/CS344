@@ -1,0 +1,123 @@
+Overview - Project involves 2 C programs
+    Text adventure game
+    
+    Program #1
+        lamartid.buildrooms.c
+        When compiled with same name (lamartid.buildrooms) CREATES
+            series of files w/ descriptions of in-game rooms & connections
+
+    Program #2 (game)
+        lamartid.adventure.c
+        Provides interface for playing game using most recently generated rooms
+
+    Game:
+        player beings in starting room & wins by entering ending room
+        Entering ending room causes game to exit, DISPLAYING PATH taken
+
+        During game, player can enter command that returns current time
+            utilize MUTEXES and MULTITHREADING
+
+    DO NOT USE C99 STANDARD - use raw C (C89)...thus don't use -c99 compilation flag
+
+Specifications
+    Rooms program
+        create dir lamartid.rooms.<procID of rooms program>
+        generate 7 room files w/ 1 room per file
+            any filenames - hard-coded
+        
+        elements of room
+            Room name - unique, 8- alpha chars, randomly assigned 7 / 10
+            Room type - START_ROOM, END_ROOM, MID_ROOM - random
+            Outbound connections to other rooms
+                3 - 6 connections
+                each has matching connection coming back (A:B and B:A)
+                --> always at least one path
+                Room cannot connect to self
+                Room cannot have more than one connect to given room
+
+        Format:
+            ROOM NAME: <room name>
+            CONNETION 1: <room name>
+            ...
+            ROOM TYPE: <room type>
+
+        Order of connections does not matter
+        Both room name choices and structure must be randomized
+
+        Recommendations:
+            1. add outbound connections 2 at a time (forwards and backwards)
+               to randomly chosen endpoints until map of all rooms satisfies requirements
+               --> no backtracking
+               *** choosing # of connections before connections themselves is harder
+            2. NO OUTPUT unless error!
+
+    The Game
+        Room data read back into program from previously generated room files
+        To get most recently created rooms --> stat() function call on rooms dirs in same
+            directory as game, open one with most recent st_mtime component of stat struct
+
+        Player interface should list where player currently is and possible connections
+        Prompt
+            CURRENT LOCATION: XYZZY
+            POSSIBLE CONNECTIONS: Plover, Dungeon, Twisty
+            WHERE TO? > 
+
+        When user types exact name of connection, program should write new line
+        and then continue running
+
+        If user types anything but valid room name from this location (case matters!),
+        game should return error line that says "HUH! I DON'T UNDERSTAND THAT ROOM. TRY AGAIN."
+        and repeat current location and prompt
+
+        Attempting incorrect location does not increment path history or step count. Once user
+        reached End Room, game should indicate it has been reached. Should print out path user
+        has taken to get there, number of steps taken (not number of rooms visited, which would
+        by one higher b/c of start room), congratulatory message, exit.
+
+        ***must use the same punctuation as specified***
+
+        Do not leave any temp files behind (not that you'll need them)
+
+        Do not have to test for early termination --> don't need to watch for those signals
+
+    Time Keeping
+        Program must be able to return current time of day w/ second thread and mutex(es)
+        Complete all other portions of this assignment first, then add
+        Use pthread library for simple multithreading -- requires -lpthread compile option
+
+        When player types "time" at prompt and hits enter, second thread should write current
+        time using strftime() - formatted output to a file called currentTime.txt. Game then reads
+        time value from file and prints to user, w/ next prompt on next line
+
+        Keep second thread running during execution and just wake it up as needed via "time"
+        command...at least one mutex MUST be used to control execution b/w threads
+
+        Mutexes...
+            only useful if ...lock() is called in multiple threads
+            allows threads to jockey for contention by having multiple locks ATTEMPT
+                to be established
+            Thread can be told to wait for another to complete with ...join() function
+                resuming execution when other thread finally terminates
+
+            Using time commmand should not incremement path history or step count. Do not
+            delete currentTime.txt file after program completes
+
+HINTS
+    Need to figure out how to get C to read input from keyboard & pause until received
+    --> recommend getline() function as used in lectures
+
+    Chance to become proficient reading and writing files...
+
+    May use open(), close(), lseek() method or STDIO library methods (fopen(), fclose(), fseek())
+
+    cannot copy string w/ assignment operator in C - need to copy strings using strcpy() or similar
+    Don't confuse string pointers with character data
+
+    Timekeeping -- Maybe the main thread at its beginning locks a mutex, then spawns second
+    thread whose first action is to attempt to gain control of the mutex by calling ...lock(),
+    blocking itself. How is the second thread started up again, when user types "time"? - By 
+    the first thread calling unlock()! (the lock attempt created a listener). You can keep first
+    thread blocked while second thread runs by calling ...join() in first thread. Remember to
+    relock mutex in main thread when it starts again and then re-create second thread.
+
+    Develop directly on class server

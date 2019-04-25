@@ -157,12 +157,57 @@ void AddRandomConnection(struct room* rooms[], int numRooms){
     ConnectRoom(roomB, roomA);
 }
 
+char* BuildRoomString(struct room* newRoom){
+    const int MAX_ROOM_DIGITS = 1;
+    char* roomStr = calloc(1000, sizeof(char));
+
+    char* nameIntro = "ROOM NAME: ";
+    char* connIntro = "CONNECTION ";
+    char* typeIntro = "START_ROOM: ";
+    char* newLine   = "\n";
+
+    strcpy(roomStr, nameIntro);
+    strcat(roomStr, newRoom->name);
+    strcat(roomStr, newLine);
+
+    int i;
+    for (i = 0; i < newRoom->numConnections; i++){
+        char* mid = ": ";
+        char* name = newRoom->connections[i]->name;
+        char* connStr = calloc(strlen(connIntro) +
+                               MAX_ROOM_DIGITS +
+                               strlen(mid) +
+                               strlen(name) + 1, sizeof(char));
+        sprintf(connStr, "%s%d%s%s", connIntro, i + 1, mid, name);
+        strcat(roomStr, connStr);
+        strcat(roomStr, newLine);
+        free(connStr);
+    }
+    char* type;
+    if (newRoom->type == START_ROOM){
+        type = "START_ROOM";
+    }else if (newRoom->type == MID_ROOM){
+        type = "MID_ROOM";
+    }else{
+        type = "END_ROOM";
+    }
+    strcat(roomStr, typeIntro);
+    strcat(roomStr, type);
+    strcat(roomStr, newLine);
+
+    return roomStr;
+}
+
 void CreateRoomFiles(struct room* rooms[], int numRooms, char* targetDir){
-    int i, roomFile;
+    int i, roomFile, written;
+    char* slash = "/";
+    char* roomStr;
     for (i = 0; i < numRooms; i++){
         char* roomPath = calloc(strlen(targetDir) +
-                                strlen(rooms[i]->name) + 1, sizeof(char));
+                                strlen(rooms[i]->name) + 
+                                strlen(slash) + 1, sizeof(char));
         strcpy(roomPath, targetDir);
+        strcat(roomPath, slash);
         strcat(roomPath, rooms[i]->name);
 
         roomFile = open(roomPath, O_WRONLY | O_CREAT, 0660);
@@ -171,7 +216,11 @@ void CreateRoomFiles(struct room* rooms[], int numRooms, char* targetDir){
             printf("Could not open %s\n", roomPath);
         }
 
+        roomStr = BuildRoomString(rooms[i]);
+        written = write(roomFile, roomStr, strlen(roomStr) * sizeof(char));
+
         free(roomPath);
+        free(roomStr);
         close(roomFile);
     }
 }
@@ -195,7 +244,6 @@ int main(int argc, char* argv[]){
 
     char* dirName = BuildDirName();
     mkdir(dirName, S_IRWXU | S_IRWXG);
-    free(dirName);
 
     char* chosenRoomNames[REQUIRED_ROOMS];
     ChooseRoomNames(chosenRoomNames, REQUIRED_ROOMS);
@@ -214,5 +262,6 @@ int main(int argc, char* argv[]){
         free(chosenRoomNames[i]);
         free(rooms[i]);
     }
+    free(dirName);
     return 0;
 }

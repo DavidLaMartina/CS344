@@ -11,6 +11,7 @@
 #define REQUIRED_ROOMS      7
 #define TOTAL_ROOMS         10
 #define MAX_CONNECTIONS     6
+#define MAX_ROOM_DIGITS     1
 #define DIR_NAME_FIRST      "lamartid.rooms."
 
 enum boolean { FALSE, TRUE };
@@ -158,22 +159,25 @@ void AddRandomConnection(struct room* rooms[], int numRooms){
 }
 // Build formatted string for room file
 char* BuildRoomString(struct room* newRoom){
-    const int MAX_ROOM_DIGITS = 1;
     char* roomStr = calloc(1000, sizeof(char));
 
+    // Set up 'intros' to each section
     char* nameIntro = "ROOM NAME: ";
     char* connIntro = "CONNECTION ";
     char* typeIntro = "ROOM TYPE: ";
     char* newLine   = "\n";
-
+    // Copy & concat name line
     strcpy(roomStr, nameIntro);
     strcat(roomStr, newRoom->name);
     strcat(roomStr, newLine);
-
+    // Create & concat line for each connection
     int i;
+    char* mid = ": ";
+    char* name;
+    char* connStr;
     for (i = 0; i < newRoom->numConnections; i++){
-        char* mid = ": ";
-        char* name = newRoom->connections[i]->name;
+        mid = ": ";
+        name = newRoom->connections[i]->name;
         char* connStr = calloc(strlen(connIntro) +
                                MAX_ROOM_DIGITS +
                                strlen(mid) +

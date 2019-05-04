@@ -16,6 +16,7 @@
 #define CONN_ENTRY_FIRST    "CONNECTION"
 #define TYPE_ENTRY_FIRST    "ROOM TYPE"
 
+// Reuse code from lamartid.buildrooms to facilitate game
 enum boolean { FALSE, TRUE };
 enum room_type { START_ROOM, MID_ROOM, END_ROOM };
 
@@ -97,11 +98,12 @@ enum room_type RoomType(char* typeStr){
         return MID_ROOM;
 }
 
-void InitRoom(struct room* newRoom, int id, char* name){
-    // newRoom = (struct room*)malloc(sizeof(struct room));
-    newRoom->id = id;
-    newRoom->name = name;
-    newRoom->numConnections = 0;
+// Allocate memory and init variables for room struct
+void InitRoom(struct room** newRoom, int id, char* name){
+    *newRoom = (struct room*)malloc(sizeof(struct room));
+    (*newRoom)->id = id;
+    (*newRoom)->name = name;
+    (*newRoom)->numConnections = 0;
 }
 
 // Populate rooms struct for easy game manipulation
@@ -127,12 +129,7 @@ void ReadRooms(struct room* rooms[], int numRooms, char* roomsDir){
                 if (fp != NULL){
                     while (fgets(buf, sizeof(buf), fp)){
                         if (strstr(buf, ROOM_ENTRY_FIRST)){
-                            // InitRoom(rooms[roomCount], roomCount, RoomFileEntry(buf));
-                            rooms[roomCount] = (struct room*)malloc(sizeof(struct room));
-                            InitRoom(rooms[roomCount], roomCount, RoomFileEntry(buf));
-                            // rooms[roomCount]->id = roomCount;
-                            // rooms[roomCount]->name = RoomFileEntry(buf);
-                            // rooms[roomCount]->numConnections = 0;
+                            InitRoom(&rooms[roomCount], roomCount, RoomFileEntry(buf));
                         }
                     }
                     fclose(fp);
@@ -146,7 +143,6 @@ void ReadRooms(struct room* rooms[], int numRooms, char* roomsDir){
     roomCount = 0;
     struct room* curRoom;
     struct room* conRoom;
-    char* typeStr;
     char* entryStr;
     dirToCheck = opendir(roomsDir);
     if (dirToCheck > 0){
@@ -185,6 +181,7 @@ void ReadRooms(struct room* rooms[], int numRooms, char* roomsDir){
     }
 }
 
+// Free rooms and allocated names
 void FreeRooms(struct room* rooms[], int numRooms){
     int i;
     for (i = 0; i < numRooms; i++){
@@ -207,13 +204,105 @@ void printRooms(struct room* rooms[], int numRooms){
     }
 }
 
+// Get starting position from rooms array
+struct room* GetStart(struct room* rooms[], int numRooms){
+    int i;
+    for (i = 0; i < numRooms; i++){
+        if (rooms[i]->type == START_ROOM){
+            return rooms[i];
+        }
+    }
+}
+
+// Display game state
+void PrintGameState(struct room* curPos){
+    printf("CURRENT LOCATION: %s\n", curPos->name);
+    printf("POSSIBLE CONNECTIONS: ");
+    int i;
+    for (i = 0; i < curPos->numConnections; i++){
+        if (i < curPos->numConnections - 1){
+            printf("%s, ", curPos->connections[i]->name);
+        }else{
+            printf("%s.\n", curPos->connections[i]->name);
+        }
+    }
+}
+
+// Display error message after incorrect room entry
+void PrintRoomError(){
+    printf("HUH? I DON'T UNDERSTAND THAT ROOM. TRY AGAIN.\n");
+    // printf("\n");   // separator for readability
+}
+
+// Display ending message
+void PrintEndMessage(struct room* path[], int pathLength){
+    printf("YOU HAVE FOUND THE END ROOM. CONGRATULATIONS\n");
+    printf("YOU TOOK %d STEPS. YOUR PATH TO VICTORY WAS:\n", pathLength);
+
+    int i;
+    for (i = 0; i < pathLength; i++){
+        printf("%s\n", path[i]->name);
+    }
+}
+
+
+// Prompt user for next room (or time)
+// Return string allocated by gettime - must be freed
+char* GetEntry(){
+    printf("WHERE TO? >");
+
+    char* lineEntered = NULL;
+    size_t bufferSize = 0;
+    int numChars = getline(&lineEntered, &bufferSize, stdin);
+    lineEntered[numChars - 1] = '\0';       // Set null terminator to make string 'usable'
+
+    // printf("\n");       // separator for readiability
+    return lineEntered;
+}
+
+
+// Driver
 int main(int argc, char* argv[]){
-    char* roomsDir = MostRecentRooms();     // Get name of most recent rooms dir
-    struct room* rooms[REQUIRED_ROOMS];     // array of rooms to be used in game
+    // Setup
+    char* roomsDir = MostRecentRooms();         // Get name of most recent rooms dir
+    struct room* rooms[REQUIRED_ROOMS];         // array of rooms to be used in game
+    ReadRooms(rooms, REQUIRED_ROOMS, roomsDir); // Read in rooms from files and create structs
+    // printRooms(rooms, REQUIRED_ROOMS);
+    
+    // Game
+    struct room* curPos = GetStart(rooms, REQUIRED_ROOMS);  // Set start room
+    struct room* path[1000];        // array of room pointers to keep track of path taken
+    int nextPath = 0;               // counter for entering rooms into path
+    struct room* nextRoom = NULL;   // point to next room user has chosen (null if invalid)
+    char* entryStr;                 // user room entry (separate variable for deallocation)
 
-    ReadRooms(rooms, REQUIRED_ROOMS, roomsDir);
-    printRooms(rooms, REQUIRED_ROOMS);
+    // Outer loop - keep getting next room until user arrives at end
+    do{
+        // Inner loop - keep printing state and requesting next room until valid entry
+        do{
+            PrintGameState(curPos);
+            entryStr = GetEntry();
+            printf("\n");       // separate for readability
 
+            nextRoom = FindRoom(rooms, REQUIRED_ROOMS, entryStr);
+            free(entryStr);     // mem allocated by getline - needs to be freed
+
+            // Print error if FindRoom didn't find a room - else update curPos & path
+            if (nextRoom == NULL){
+                PrintRoomError();
+                printf("\n");   // separate for readability
+            }else{
+                curPos = nextRoom;
+                path[nextPath] = nextRoom;
+                nextPath++;
+            }
+        }while (nextRoom == NULL);
+    }while (curPos->type != END_ROOM);
+
+    // Once user has found end room, print message
+    PrintEndMessage(path, nextPath);
+
+    // Finish / free memory
     free(roomsDir);
     FreeRooms(rooms, REQUIRED_ROOMS);
 

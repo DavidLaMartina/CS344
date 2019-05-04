@@ -5,11 +5,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <time.h>
 
+#define REQUIRED_ROOMS      7
 #define MAX_CONNECTIONS     6
 #define MAX_ROOM_DIGITS     1
 #define DIR_NAME_FIRST      "lamartid.rooms."
+#define ROOM_ENTRY_FIRST    "ROOM NAME"
+#define CONN_ENTRY_FIRST    "CONNECTION"
+#define TYPE_ENTRY_FIRST    "ROOM TYPE"
 
 enum boolean { FALSE, TRUE };
 enum room_type { START_ROOM, MID_ROOM, END_ROOM };
@@ -22,10 +27,17 @@ struct room{
     enum room_type type;
 };
 
+// Add B to A's connections, increment A's numConnections
+void ConnectRoom(struct room* roomA, struct room* roomB){
+    roomA->connections[roomA->numConnections] = roomB;
+    (roomA->numConnections)++;
+}
+
+// Return string representing most recently created rooms directory
 char* MostRecentRooms(){
-    int newestDirTime = -1;                         // timestamp of newest subdir
-    char targetDirPrefix[100] = DIR_NAME_FIRST;     // prefix to search for
-    char* newestDirName = calloc(100, sizeof(char)); // holds name of newest candidate
+    int newestDirTime = -1;                             // timestamp of newest subdir
+    char targetDirPrefix[100] = DIR_NAME_FIRST;         // prefix to search for
+    char* newestDirName = calloc(100, sizeof(char));    // holds name of newest candidate
     memset(newestDirName, '\0', sizeof(newestDirName));
 
     DIR* dirToCheck;                            // holds start directory
@@ -54,12 +66,156 @@ char* MostRecentRooms(){
     return newestDirName;
 }
 
-int main(int argc, char* argv[]){
-    char* roomsDir = MostRecentRooms();
+// Separates text of interest from roomFile line
+char* RoomFileEntry(char* line){
+    char* first  = strtok(line, ":");
+    char* second = strtok(NULL, " ");
+    char* third  = strtok(second, "\n");
+    char* final  = calloc(strlen(third) + 1, sizeof(char));
+    strcpy(final, third);
+    return final;
+}
 
-    printf("The most recent directory for rooms is %s\n", roomsDir);
+// Find room by name within rooms array
+struct room* FindRoom(struct room* rooms[], int numRooms, char* nameToFind){
+    int i;
+    for (i = 0; i < numRooms; i++){
+        if (strcmp(rooms[i]->name, nameToFind) == 0){
+            return rooms[i];
+        }
+    }
+    return NULL;
+}
+
+// Determine room type base on string
+enum room_type RoomType(char* typeStr){
+    if (strcmp(typeStr, "START_ROOM") == 0)
+        return START_ROOM;
+    else if (strcmp(typeStr, "END_ROOM") == 0)
+        return END_ROOM;
+    else
+        return MID_ROOM;
+}
+
+void InitRoom(struct room* newRoom, int id, char* name){
+    // newRoom = (struct room*)malloc(sizeof(struct room));
+    newRoom->id = id;
+    newRoom->name = name;
+    newRoom->numConnections = 0;
+}
+
+// Populate rooms struct for easy game manipulation
+void ReadRooms(struct room* rooms[], int numRooms, char* roomsDir){
+    struct dirent* roomFile;
+    DIR* dirToCheck;
+    int roomCount = 0;
+    FILE* fp;
+    char buf[100];
+    char roomPath[100];
+
+    // First readthrough - get names of all rooms so connections can be made
+    dirToCheck = opendir(roomsDir);
+    if (dirToCheck > 0){
+        while ((roomFile = readdir(dirToCheck)) != NULL){
+            // Ignore hidden files (Assume only files are rooms, ., and ..)
+            if (roomFile->d_name[0] != '.'){
+                strcpy(roomPath, roomsDir);
+                strcat(roomPath, "/");
+                strcat(roomPath, roomFile->d_name);
+                
+                fp = fopen(roomPath, "r");
+                if (fp != NULL){
+                    while (fgets(buf, sizeof(buf), fp)){
+                        if (strstr(buf, ROOM_ENTRY_FIRST)){
+                            // InitRoom(rooms[roomCount], roomCount, RoomFileEntry(buf));
+                            rooms[roomCount] = (struct room*)malloc(sizeof(struct room));
+                            InitRoom(rooms[roomCount], roomCount, RoomFileEntry(buf));
+                            // rooms[roomCount]->id = roomCount;
+                            // rooms[roomCount]->name = RoomFileEntry(buf);
+                            // rooms[roomCount]->numConnections = 0;
+                        }
+                    }
+                    fclose(fp);
+                }  
+                roomCount++;
+            }
+        }
+        closedir(dirToCheck);
+    }
+    // Second readthrough - make connections
+    roomCount = 0;
+    struct room* curRoom;
+    struct room* conRoom;
+    char* typeStr;
+    char* entryStr;
+    dirToCheck = opendir(roomsDir);
+    if (dirToCheck > 0){
+        while ((roomFile = readdir(dirToCheck)) != NULL){
+            if (roomFile->d_name[0] != '.'){
+                strcpy(roomPath, roomsDir);
+                strcat(roomPath, "/");
+                strcat(roomPath, roomFile->d_name);
+
+                fp = fopen(roomPath, "r");
+                if (fp != NULL){
+                    curRoom = NULL; // keep null until assigned to check null
+                    while (fgets(buf, sizeof(buf), fp)){
+                        if (strstr(buf, ROOM_ENTRY_FIRST)){
+                            entryStr = RoomFileEntry(buf);
+                            curRoom = FindRoom(rooms, numRooms, entryStr);
+                            free(entryStr);
+                        }
+                        else if (strstr(buf, CONN_ENTRY_FIRST) && curRoom != NULL){
+                            entryStr = RoomFileEntry(buf);
+                            conRoom = FindRoom(rooms, numRooms, entryStr);
+                            ConnectRoom(curRoom, conRoom); 
+                            free(entryStr);
+                        }
+                        else if (strstr(buf, TYPE_ENTRY_FIRST) && curRoom != NULL){
+                            entryStr = RoomFileEntry(buf);
+                            curRoom->type = RoomType(entryStr);
+                            free(entryStr);
+                        }
+                    }
+                    fclose(fp);
+                }
+            }
+        }
+        closedir(dirToCheck);
+    }
+}
+
+void FreeRooms(struct room* rooms[], int numRooms){
+    int i;
+    for (i = 0; i < numRooms; i++){
+        free(rooms[i]->name);
+        free(rooms[i]);
+    }
+}
+
+// Diagnostic print function
+void printRooms(struct room* rooms[], int numRooms){
+    int i, j;
+    for (i = 0; i < numRooms; i++){
+        printf("Room %d: \n\t%d\n\t%s\n\t%d\n\t%d\n\t", i,
+                rooms[i]->id, rooms[i]->name, rooms[i]->numConnections, rooms[i]->type);
+        printf("Connections: ");
+        for (j = 0; j < rooms[i]->numConnections; j++){
+            printf("%s ", rooms[i]->connections[j]->name);
+        }
+        printf("\n");
+    }
+}
+
+int main(int argc, char* argv[]){
+    char* roomsDir = MostRecentRooms();     // Get name of most recent rooms dir
+    struct room* rooms[REQUIRED_ROOMS];     // array of rooms to be used in game
+
+    ReadRooms(rooms, REQUIRED_ROOMS, roomsDir);
+    printRooms(rooms, REQUIRED_ROOMS);
 
     free(roomsDir);
+    FreeRooms(rooms, REQUIRED_ROOMS);
 
     return 0;
 }

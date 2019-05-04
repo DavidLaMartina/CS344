@@ -286,11 +286,12 @@ void Time(){
 
 // Driver
 int main(int argc, char* argv[]){
-    // Setup
+    // Thread setup
+
+    // Game Setup
     char* roomsDir = MostRecentRooms();         // Get name of most recent rooms dir
     struct room* rooms[REQUIRED_ROOMS];         // array of rooms to be used in game
     ReadRooms(rooms, REQUIRED_ROOMS, roomsDir); // Read in rooms from files and create structs
-    // printRooms(rooms, REQUIRED_ROOMS);
     
     // Game
     struct room* curPos = GetStart(rooms, REQUIRED_ROOMS);  // Set start room
@@ -307,12 +308,13 @@ int main(int argc, char* argv[]){
             entryStr = GetEntry();
             printf("\n");       // separate for readability
 
-            // Print time if user entered time; otherwise re-prompt or move on
+            // Print time if user entered time
             if (strcmp(entryStr, "time") == 0){
                 printf("TIME\n");
 
                 nextRoom = NULL;
             }
+            // Else process entry as room string
             else{
                 nextRoom = NextRoom(curPos, entryStr);
                 if (nextRoom == NULL){

@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include <pthread.h>
 
 #define REQUIRED_ROOMS      7
 #define MAX_CONNECTIONS     6
@@ -214,6 +215,17 @@ struct room* GetStart(struct room* rooms[], int numRooms){
     }
 }
 
+// Validate next room choice, return room pointer or null
+struct room* NextRoom(struct room* curPos, char* nameToFind){
+    int i;
+    for (i = 0; i < curPos->numConnections; i++){
+        if (strcmp(curPos->connections[i]->name, nameToFind) == 0){
+            return curPos->connections[i];
+        }
+    }
+    return NULL;
+}
+
 // Display game state
 void PrintGameState(struct room* curPos){
     printf("CURRENT LOCATION: %s\n", curPos->name);
@@ -228,10 +240,15 @@ void PrintGameState(struct room* curPos){
     }
 }
 
-// Display error message after incorrect room entry
+// Bad room entry errors
 void PrintRoomError(){
     printf("HUH? I DON'T UNDERSTAND THAT ROOM. TRY AGAIN.\n");
-    // printf("\n");   // separator for readability
+}
+void PrintCurError(){
+    printf("YOU'RE ALREADY THERE! TRY AGAIN.\n");
+}
+void PrintNoConnectionError(){
+    printf("YOU CAN'T GET TO THAT ROOM FROM YOUR CURRENT POSITION!\n");
 }
 
 // Display ending message
@@ -260,6 +277,12 @@ char* GetEntry(){
     return lineEntered;
 }
 
+// Write & Display time
+void Time(){
+
+
+}
+
 
 // Driver
 int main(int argc, char* argv[]){
@@ -284,18 +307,30 @@ int main(int argc, char* argv[]){
             entryStr = GetEntry();
             printf("\n");       // separate for readability
 
-            nextRoom = FindRoom(rooms, REQUIRED_ROOMS, entryStr);
-            free(entryStr);     // mem allocated by getline - needs to be freed
+            // Print time if user entered time; otherwise re-prompt or move on
+            if (strcmp(entryStr, "time") == 0){
+                printf("TIME\n");
 
-            // Print error if FindRoom didn't find a room - else update curPos & path
-            if (nextRoom == NULL){
-                PrintRoomError();
-                printf("\n");   // separate for readability
-            }else{
-                curPos = nextRoom;
-                path[nextPath] = nextRoom;
-                nextPath++;
+                nextRoom = NULL;
             }
+            else{
+                nextRoom = NextRoom(curPos, entryStr);
+                if (nextRoom == NULL){
+                    if (strcmp(entryStr, curPos->name) == 0){
+                        PrintCurError();
+                    }else if (FindRoom(rooms, REQUIRED_ROOMS, entryStr) != NULL){
+                        PrintNoConnectionError();
+                    }else{
+                        PrintRoomError();
+                    }
+                    printf("\n");       // separate for readability
+                }else{
+                    curPos = nextRoom;
+                    path[nextPath] = nextRoom;
+                    nextPath++;
+                }
+            }
+            free(entryStr);     // mem allocated by getline - needs to be freed
         }while (nextRoom == NULL);
     }while (curPos->type != END_ROOM);
 

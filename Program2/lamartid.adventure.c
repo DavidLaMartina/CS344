@@ -330,7 +330,18 @@ void ReadTime(){
 }
 
 // Lock / unlock methods to reduce code in main
-
+void LockMutex(){
+    if (pthread_mutex_lock(&timeLock) != 0){
+        printf("Lock not created...exiting\n");
+        exit(1);
+    }
+}
+void CreateTimeThread(){
+    if (pthread_create(&timeThread, NULL, &WriteTime, NULL) != 0){
+        printf("Time thread could not be created...exiting\n");
+        exit(1);
+    }
+}
 
 // Driver
 int main(int argc, char* argv[]){
@@ -339,17 +350,9 @@ int main(int argc, char* argv[]){
     struct room* rooms[REQUIRED_ROOMS];         // Array of rooms to be used in game
     ReadRooms(rooms, REQUIRED_ROOMS, roomsDir); // Read in rooms from files and create structs
 
-
-    // Create lock & spawn thread that will wait for "time" input
-    if (pthread_mutex_lock(&timeLock) != 0){
-        printf("Lock not created...exiting\n");
-        return 1;
-    }
-    if (pthread_create(&timeThread, NULL, &WriteTime, NULL) != 0){
-        printf("Thread not created...exiting\n");
-        return 1;
-    }
-     
+    LockMutex();        // Lock main thread until user enters "time"
+    CreateTimeThread(); // Spawn time-writing thread
+    
     // Game
     struct room* curPos = GetStart(rooms, REQUIRED_ROOMS);  // Set start room
     struct room* path[1000];        // array of room pointers to keep track of path taken
@@ -371,15 +374,8 @@ int main(int argc, char* argv[]){
                 pthread_join(timeThread, NULL);     // Barrier - Ensure write finishes
                 ReadTime();
 
-                // Lock and recreate thread for next time entry
-                if (pthread_mutex_lock(&timeLock) != 0){
-                    printf("Lock not created...exiting\n");
-                    return 1;
-                }
-                if (pthread_create(&timeThread, NULL, &WriteTime, NULL) != 0){
-                    printf("Thread not created...exiting\n");
-                    return 1;
-                }
+                LockMutex();        // Re-lock until next "time" entry
+                CreateTimeThread(); // Create new thread for next "time" entry
 
                 nextRoom = NULL;
             }

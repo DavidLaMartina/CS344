@@ -13,14 +13,15 @@
 #define MAX_CONNECTIONS     6
 #define MAX_ROOM_DIGITS     1
 #define DIR_NAME_FIRST      "lamartid.rooms."
+#define TIME_FILE_PATH      "currentTime.txt"
 #define ROOM_ENTRY_FIRST    "ROOM NAME"
 #define CONN_ENTRY_FIRST    "CONNECTION"
 #define TYPE_ENTRY_FIRST    "ROOM TYPE"
 
-// Reuse code from lamartid.buildrooms to facilitate game
 enum boolean { FALSE, TRUE };
 enum room_type { START_ROOM, MID_ROOM, END_ROOM };
 
+// Use room struct from buildrooms to give structure to room data
 struct room{
     int id;
     char* name;
@@ -262,7 +263,6 @@ void PrintEndMessage(struct room* path[], int pathLength){
     }
 }
 
-
 // Prompt user for next room (or time)
 // Return string allocated by gettime - must be freed
 char* GetEntry(){
@@ -277,22 +277,79 @@ char* GetEntry(){
     return lineEntered;
 }
 
-// Write & Display time
-void Time(){
+// Thread safety globals
+pthread_t timeThread;                       // Second thread for writing to date time file
+pthread_mutex_t timeLock;                   // Lock for thread-safe write to date time file
 
+// Write time in second thread
+// Assistance from https://www.tutorialspoint.com/c_standard_library/c_function_strftime.htm
+void* WriteTime(){
+    pthread_mutex_lock(&timeLock);  // Attempt lock - execution upon unlock from main thread
 
+    // Attempt file open for writing - exit if fail
+    int timeFile = open(TIME_FILE_PATH, O_WRONLY | O_CREAT, 0660);
+    if (timeFile < 0){
+        printf("Could not create and open %s\n", TIME_FILE_PATH);
+        exit(1);
+    }
+    // Get and format time
+    char timeBuf[100];
+    memset(timeBuf, '\0', strlen(timeBuf)); // Ensure string will end in null terminator
+    time_t curTime;
+    struct tm* timeComponents;
+    time(&curTime);
+    timeComponents = localtime(&curTime);
+    strftime(timeBuf, 100, "%I:%M%P, %A, %B %d, %Y", timeComponents);
+
+    // Write formatted time to file
+    int bytesToWrite = strlen(timeBuf) * sizeof(char);
+    int written = write(timeFile, timeBuf, bytesToWrite);
+    if (written != bytesToWrite){
+        printf("Could not complete writing time to %s\n", TIME_FILE_PATH);
+        exit(1);
+    }
+    close(timeFile);
+
+    pthread_mutex_unlock(&timeLock);    // Unlock to allow main thread to regain control
+    return NULL;
 }
+
+// Display time as read from currentTime.txt - file created by WriteTime
+void ReadTime(){
+    char buf[100];  // Create buffer to read in time
+
+    FILE* timeFile = fopen(TIME_FILE_PATH, "r");    // open for read
+    if (timeFile == NULL){
+        printf("Time file could not be opened\n");
+        exit(1);
+    }
+    while (fgets(buf, sizeof(buf), timeFile)){
+        printf("\t%s\n\n", buf);
+    }
+    fclose(timeFile);
+}
+
+// Lock / unlock methods to reduce code in main
 
 
 // Driver
 int main(int argc, char* argv[]){
-    // Thread setup
-
     // Game Setup
     char* roomsDir = MostRecentRooms();         // Get name of most recent rooms dir
-    struct room* rooms[REQUIRED_ROOMS];         // array of rooms to be used in game
+    struct room* rooms[REQUIRED_ROOMS];         // Array of rooms to be used in game
     ReadRooms(rooms, REQUIRED_ROOMS, roomsDir); // Read in rooms from files and create structs
-    
+
+
+    // Create lock & spawn thread that will wait for "time" input
+    if (pthread_mutex_lock(&timeLock) != 0){
+        printf("Lock not created...exiting\n");
+        return 1;
+    }
+    if (pthread_create(&timeThread, NULL, &WriteTime, NULL) != 0){
+        printf("Thread not created...exiting\n");
+        return 1;
+    }
+     
     // Game
     struct room* curPos = GetStart(rooms, REQUIRED_ROOMS);  // Set start room
     struct room* path[1000];        // array of room pointers to keep track of path taken
@@ -308,9 +365,21 @@ int main(int argc, char* argv[]){
             entryStr = GetEntry();
             printf("\n");       // separate for readability
 
-            // Print time if user entered time
+            // If entry "time", write to time file in separate thread, then read in main
             if (strcmp(entryStr, "time") == 0){
-                printf("TIME\n");
+                pthread_mutex_unlock(&timeLock);    // Unlock secondary thread for writing
+                pthread_join(timeThread, NULL);     // Barrier - Ensure write finishes
+                ReadTime();
+
+                // Lock and recreate thread for next time entry
+                if (pthread_mutex_lock(&timeLock) != 0){
+                    printf("Lock not created...exiting\n");
+                    return 1;
+                }
+                if (pthread_create(&timeThread, NULL, &WriteTime, NULL) != 0){
+                    printf("Thread not created...exiting\n");
+                    return 1;
+                }
 
                 nextRoom = NULL;
             }
@@ -339,7 +408,9 @@ int main(int argc, char* argv[]){
     // Once user has found end room, print message
     PrintEndMessage(path, nextPath);
 
-    // Finish / free memory
+    // Finish / free memory / cancel thread
+    pthread_cancel(timeThread);
+    pthread_mutex_destroy(&timeLock);
     free(roomsDir);
     FreeRooms(rooms, REQUIRED_ROOMS);
 

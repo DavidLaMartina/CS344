@@ -110,12 +110,12 @@ void InitRoom(struct room** newRoom, int id, char* name){
 
 // Populate rooms struct for easy game manipulation
 void ReadRooms(struct room* rooms[], int numRooms, char* roomsDir){
-    struct dirent* roomFile;
-    DIR* dirToCheck;
-    int roomCount = 0;
-    FILE* fp;
-    char buf[100];
-    char roomPath[100];
+    struct dirent* roomFile;    // Pointer to specific room file
+    DIR* dirToCheck;            // Directory to check for room files
+    int roomCount = 0;          // Keep track of number of rooms checked
+    FILE* fp;                   // File pointer for open, close, error check
+    char buf[100];              // buffer for entries
+    char roomPath[100];         // buffer for room file paths
 
     // First readthrough - get names of all rooms so connections can be made
     dirToCheck = opendir(roomsDir);
@@ -142,10 +142,10 @@ void ReadRooms(struct room* rooms[], int numRooms, char* roomsDir){
         closedir(dirToCheck);
     }
     // Second readthrough - make connections
-    roomCount = 0;
-    struct room* curRoom;
-    struct room* conRoom;
-    char* entryStr;
+    roomCount = 0;          // Reset room counter so correct room referenced
+    struct room* curRoom;   // Pointer to room whose connections being made
+    struct room* conRoom;   // Pointer to room to be connected to current
+    char* entryStr;         // Pointer to current line / string read
     dirToCheck = opendir(roomsDir);
     if (dirToCheck > 0){
         while ((roomFile = readdir(dirToCheck)) != NULL){
@@ -284,7 +284,7 @@ pthread_mutex_t timeLock;                   // Lock for thread-safe write to dat
 // Write time in second thread
 // Assistance from https://www.tutorialspoint.com/c_standard_library/c_function_strftime.htm
 void* WriteTime(){
-    pthread_mutex_lock(&timeLock);  // Attempt lock - execution upon unlock from main thread
+    pthread_mutex_lock(&timeLock);  // Attempt lock - execution upon unlock from main
 
     // Attempt file open for writing - exit if fail
     int timeFile = open(TIME_FILE_PATH, O_WRONLY | O_CREAT, 0660);
@@ -293,17 +293,17 @@ void* WriteTime(){
         exit(1);
     }
     // Get and format time
-    char timeBuf[100];
+    char timeBuf[100];                      // Buffer for time string
     memset(timeBuf, '\0', strlen(timeBuf)); // Ensure string will end in null terminator
-    time_t curTime;
-    struct tm* timeComponents;
-    time(&curTime);
-    timeComponents = localtime(&curTime);
-    strftime(timeBuf, 100, "%I:%M%P, %A, %B %d, %Y", timeComponents);
+    time_t curTime;                         // Struct for getting current time
+    struct tm* timeComponents;              // Struct for separating time into parts
+    time(&curTime);                         // Put current time into storage
+    timeComponents = localtime(&curTime);   // Separate time into printable parts
+    strftime(timeBuf, 100, "%I:%M%P, %A, %B %d, %Y", timeComponents);   // Save in buf
 
     // Write formatted time to file
-    int bytesToWrite = strlen(timeBuf) * sizeof(char);
-    int written = write(timeFile, timeBuf, bytesToWrite);
+    int bytesToWrite = strlen(timeBuf) * sizeof(char);      // Space requirement
+    int written = write(timeFile, timeBuf, bytesToWrite);   // Attempt write to file
     if (written != bytesToWrite){
         printf("Could not complete writing time to %s\n", TIME_FILE_PATH);
         exit(1);
@@ -323,9 +323,8 @@ void ReadTime(){
         printf("Time file could not be opened\n");
         exit(1);
     }
-    while (fgets(buf, sizeof(buf), timeFile)){
-        printf("\t%s\n\n", buf);
-    }
+    fgets(buf, sizeof(buf), timeFile);  // Just one line in file to print
+    printf("\t%s\n\n", buf); 
     fclose(timeFile);
 }
 
@@ -352,6 +351,7 @@ int main(int argc, char* argv[]){
 
     LockMutex();        // Lock main thread until user enters "time"
     CreateTimeThread(); // Spawn time-writing thread
+    enum boolean InPlay = TRUE; // Flag for time-keeping thread
     
     // Game
     struct room* curPos = GetStart(rooms, REQUIRED_ROOMS);  // Set start room

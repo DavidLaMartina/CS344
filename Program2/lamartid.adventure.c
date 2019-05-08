@@ -280,10 +280,16 @@ char* GetEntry(){
 // Thread safety globals
 pthread_t timeThread;                       // Second thread for writing to date time file
 pthread_mutex_t timeLock;                   // Lock for thread-safe write to date time file
+enum boolean InPlay;                        // Flag for time-keeping thread
 
 // Write time in second thread
-// Assistance from https://www.tutorialspoint.com/c_standard_library/c_function_strftime.htm
+// Assistance: https://www.tutorialspoint.com/c_standard_library/c_function_strftime.htm
 void* WriteTime(){
+    // Return immediately if flag is false
+    if (InPlay == FALSE){
+        return NULL;
+    }
+
     pthread_mutex_lock(&timeLock);  // Attempt lock - execution upon unlock from main
 
     // Attempt file open for writing - exit if fail
@@ -294,7 +300,7 @@ void* WriteTime(){
     }
     // Get and format time
     char timeBuf[100];                      // Buffer for time string
-    memset(timeBuf, '\0', strlen(timeBuf)); // Ensure string will end in null terminator
+    memset(timeBuf, '\0', sizeof(timeBuf)); // Ensure string will end in null terminator
     time_t curTime;                         // Struct for getting current time
     struct tm* timeComponents;              // Struct for separating time into parts
     time(&curTime);                         // Put current time into storage
@@ -351,7 +357,7 @@ int main(int argc, char* argv[]){
 
     LockMutex();        // Lock main thread until user enters "time"
     CreateTimeThread(); // Spawn time-writing thread
-    enum boolean InPlay = TRUE; // Flag for time-keeping thread
+    InPlay = TRUE;
     
     // Game
     struct room* curPos = GetStart(rooms, REQUIRED_ROOMS);  // Set start room
@@ -404,11 +410,17 @@ int main(int argc, char* argv[]){
     // Once user has found end room, print message
     PrintEndMessage(path, nextPath);
 
-    // Finish / free memory / cancel thread
-    pthread_cancel(timeThread);
-    pthread_mutex_destroy(&timeLock);
+    // Free malloc / calloc memory
     free(roomsDir);
     FreeRooms(rooms, REQUIRED_ROOMS);
+     
+    // Finish / free thread memory
+    InPlay = FALSE;                     // Avoid unwanted write to time file
+    pthread_mutex_unlock(&timeLock);    // Unlock lock now that flag has been set
+    pthread_join(timeThread, NULL);
+    pthread_exit(&timeThread);
+    pthread_mutex_destroy(&timeLock);
 
+    
     return 0;
 }

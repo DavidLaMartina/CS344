@@ -14,6 +14,7 @@
 #include <sys/types.h>
 
 #include "boolean.h"
+#include "utilities.h"
 #include "commandInput.h"
 
 #define MAX_CHARS       2048    // Maximum length of total command
@@ -21,23 +22,9 @@
 #define MAX_CHILDREN    512     // Assumed...not specified in instructions
 #define DEFAULT_EXIT    0       // Default exit status per instruction
 
-// Bool type for easy-to-read TRUE / FALSE
-// enum boolean { FALSE, TRUE  };
-
-// Helper prototypes
-void getCommand( char**, enum boolean, char*, char*, int );          // Get command line input
-                        // Execute command
-                        // Handle SIGSTP signal
-                        // Display exit status
-
-// Built-in prototypes
+// Built-in command prototypes
 void changeDirectory( char* );      // cd (change directory)
 void printStatus( int );            // print exit status / signal of most recently terminated child
-
-// Utility prototypes
-void nullifyCharArray( char**, int );           // Set every line of input buffer to null
-enum boolean canIgnore( char** );            // Is command blank or comment?
-
 
 // Driver
 int main(int argc, char* argv[])
@@ -59,7 +46,7 @@ int main(int argc, char* argv[])
     // Clear buffers before starting
     memset( inFileName,     '\0', MAX_CHARS * sizeof( inFileName[0] ) );
     memset( outFileName,    '\0', MAX_CHARS * sizeof( outFileName[0] ) );
-    nullifyCharArray( input, MAX_ARGS );
+    nullifyStringArray( input, MAX_ARGS );
 
     while (inSession == TRUE)
     {
@@ -87,7 +74,7 @@ int main(int argc, char* argv[])
         // Reset state and buffers
         memset( inFileName,     '\0', MAX_CHARS * sizeof( inFileName[0] ) );
         memset( outFileName,    '\0', MAX_CHARS * sizeof( outFileName[0] ) );
-        nullifyCharArray( input, MAX_ARGS );
+        nullifyStringArray( input, MAX_ARGS );
     }
 
     return 0;
@@ -131,41 +118,41 @@ void printStatus( int childExitMethod )
     }
 }
 
-/*******************************************************************************
- * Simple utilities for reducing code in main and "big" helpers
- ******************************************************************************/
-
-// Set all top-level elements (input buffer lines) of string array to NULL
-void nullifyCharArray( char** buffer, int bufSize )
-{
-    int i;
-    for (i = 0; i < bufSize; i++ ){
-        buffer[i] = NULL;
-    }
-}
-
-// Check whether line can be ignored (blank or comment)
-enum boolean canIgnore( char** buffer )
-{
-    if ( buffer[0] == NULL ){
-        return TRUE;
-    }
-    else if ( buffer[0][0] == '#'  ||
-              buffer[0][0] == '\0' ||
-              buffer[0][0] == '\n' ){
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
-
-// Re-entrant output using write() and fflush()
-// 'location' paramer is place to output - likely stdin, stdout, or stderr
-//      but could be other file handler
-void printSafe( char* message, int location )
-{
-    // Check null
-    if ( !message ) return;
-
-    write( location, message, strlen( message ) * sizeof( char ) );
-}
+// /*******************************************************************************
+//  * Simple utilities for reducing code in main and "big" helpers
+//  ******************************************************************************/
+// 
+// // Set all top-level elements (input buffer lines) of string array to NULL
+// void nullifyStringArray( char** buffer, int bufSize )
+// {
+//     int i;
+//     for (i = 0; i < bufSize; i++ ){
+//         buffer[i] = NULL;
+//     }
+// }
+// 
+// // Check whether line can be ignored (blank or comment)
+// enum boolean canIgnore( char** buffer )
+// {
+//     if ( buffer[0] == NULL ){
+//         return TRUE;
+//     }
+//     else if ( buffer[0][0] == '#'  ||
+//               buffer[0][0] == '\0' ||
+//               buffer[0][0] == '\n' ){
+//         return TRUE;
+//     } else {
+//         return FALSE;
+//     }
+// }
+// 
+// // Re-entrant output using write() and fflush()
+// // 'location' paramer is place to output - likely stdin, stdout, or stderr
+// //      but could be other file handler
+// void printSafe( char* message, int location )
+// {
+//     // Check null
+//     if ( !message ) return;
+// 
+//     write( location, message, strlen( message ) * sizeof( char ) );
+// }

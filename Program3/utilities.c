@@ -48,7 +48,7 @@ enum boolean canIgnore( char** buffer )
 // Re-entrant output using write() and fflush()
 // 'location' param is place to output - stdin, stdout, stderr,
 // or some other location / file handler
-void printSafe( char* message, int location )
+void printSafe( const char* message, int location )
 {
     // Check null
     if ( !message )
@@ -61,11 +61,11 @@ void printSafe( char* message, int location )
 // Assumes the original string is null-terminated
 // *** Malloc'd memory must be freed by caller
 // Credit: https://www.geeksforgeeks.org/c-program-replace-word-text-another-given-word/
-char* replaceWord( char* original, char* oldWord, char* newWord )
+char* replaceWord( const char* original, const char* oldWord, const char* newWord )
 {
     char *result;       // Will hold result (allocated memory)
     int i;              // index variable
-    int count;          // count of old word instances to be replaced
+    int count = 0;      // count of old word instances to be replaced
 
     int newWordLength = strlen( newWord );  // Track lengths to allocate memory properly
     int oldWordLength = strlen( oldWord );

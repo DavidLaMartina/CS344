@@ -17,7 +17,7 @@
 // credit Lecture 3.3 - Advanced User Input with Getline()
 void catchSIGINT( int signo )
 {
-    char* message = "SIGINT. Use CTRL-Z to Stop.\n";
+    const char* message = "SIGINT. Use CTRL-Z to Stop.\n";
     printSafe( message, STDOUT_FILENO );
 }
     
@@ -33,13 +33,15 @@ void getCommand( char** linesArr,
                  int    shellPID,
                  int    maxChars )
 {
+    const char* shellExpand = "$$"; // const string to be used in expansion from $$ to shellPID
+
     // Convert shellPID to string for use in expansions as needed -- needs to be freed at end
     char* shellPIDString = intToString( shellPID );
 
     // Get user input, accounting for possible interruptions; returned line is scrubbed of \n
     char* userInput = getInputLine();
 
-    // If blank...do anything
+    // If blank...do anything?
     
     // Parse line of input into discrete words
     const char* space = " ";                        // space is our only delimeter
@@ -63,20 +65,19 @@ void getCommand( char** linesArr,
         }
 
         // Check & for background process
-        else if (strcmp( nextWord, "&" ) == 0 ){
+        else if ( strcmp( nextWord, "&" ) == 0 ){
             *inBackground = TRUE;
         }
 
         // If still in loop, phrase / word must be a command or argument (so store in array)
         // Run every word through replaceWord to ensure any instance of $$ replaced with shell PID
         else {
-            char* nextWordExpanded = replaceWord( nextWord, "$$", shellPIDString );
+            char* nextWordExpanded = replaceWord( nextWord, shellExpand, shellPIDString );
             linesArr[i] = nextWordExpanded;
         }
+        // Call strtok again to advance to next word
+        nextWord = strtok( NULL, space );
     }
-    // Call strtok again to advance to next word
-    strtok( NULL, space );
-
     // Free memory alloc'd by getline() in getInputLine() call and intToString
     free( userInput );
     free( shellPIDString );

@@ -10,6 +10,10 @@
 
 int main()
 {
+    // prompt
+    printf( ": " );
+    fflush(stdout);
+
     char* linesArr[ MAX_ARGS ];
     nullifyStringArray( linesArr, MAX_ARGS );
 
@@ -18,7 +22,9 @@ int main()
     enum boolean inBackground = FALSE;
 
     char inFileName[ MAX_CHAR ];
+    memset( inFileName, '\0', MAX_CHAR );
     char outFileName[ MAX_CHAR ];
+    memset( outFileName, '\0', MAX_CHAR );
 
     int shellPID = 12345;
 
@@ -32,7 +38,15 @@ int main()
                 shellPID,
                 maxChars );
 
+    int i;
+    for ( i = 0; i < MAX_ARGS && linesArr[i]; i++ )
+        printf( "%s\n", linesArr[i] );
 
+    printf( "Here is the inFile: %s\n", inFileName );
+    printf( "Here is the outFile; %s\n", outFileName );
+    printf( "Are we going to run in the background? %d\n", inBackground );
+
+    freeStringArray( linesArr, MAX_ARGS );
 
     return 0;
 }

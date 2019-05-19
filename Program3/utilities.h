@@ -20,10 +20,10 @@ void freeStringArray( char** buffer, int bufSize );
 enum boolean canIgnore( char** buffer );
 
 // Re-entrant output using write() and fflush()
-void printSafe( char* message, int location );
+void printSafe( const char* message, int location );
 
 // Replace word (required to replace $$ with shell PID)
-char* replaceWord( char*, char*, char* );
+char* replaceWord( const char*, const char*, const char* );
 
 // Determine number of digits in integer (Required for int - string conversion)
 int numDigits( int );

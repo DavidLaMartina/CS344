@@ -22,4 +22,13 @@ enum boolean canIgnore( char** buffer );
 // Re-entrant output using write() and fflush()
 void printSafe( char* message, int location );
 
+// Replace word (required to replace $$ with shell PID)
+char* replaceWord( char*, char*, char* );
+
+// Determine number of digits in integer (Required for int - string conversion)
+int numDigits( int );
+
+// Convert integer to string
+char* intToString( int );
+
 #endif

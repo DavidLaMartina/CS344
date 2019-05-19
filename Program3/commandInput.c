@@ -33,6 +33,9 @@ void getCommand( char** linesArr,
                  int    shellPID,
                  int    maxChars )
 {
+    // Convert shellPID to string for use in expansions as needed -- needs to be freed at end
+    char* shellPIDString = intToString( shellPID );
+
     // Get user input, accounting for possible interruptions; returned line is scrubbed of \n
     char* userInput = getInputLine();
 
@@ -65,13 +68,18 @@ void getCommand( char** linesArr,
         }
 
         // If still in loop, phrase / word must be a command or argument (so store in array)
-        // Replace any $$ with the main shell process ID
+        // Run every word through replaceWord to ensure any instance of $$ replaced with shell PID
         else {
-            linesArr[i] = strdup( nextWord );
+            char* nextWordExpanded = replaceWord( nextWord, "$$", shellPIDString );
+            linesArr[i] = nextWordExpanded;
+        }
+    }
+    // Call strtok again to advance to next word
+    strtok( NULL, space );
 
-
-    // Free memory alloc'd by getline() in getInputLine() call
+    // Free memory alloc'd by getline() in getInputLine() call and intToString
     free( userInput );
+    free( shellPIDString );
 }
 
 char* getInputLine()

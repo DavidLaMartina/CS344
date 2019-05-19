@@ -1,0 +1,136 @@
+Overview
+    run command line instructions and return results
+    allow redirection of standard input and standard output
+    support fg and bg procs (controllable by command line and receiving signals)
+    support three built-in commands
+        exit
+        cd
+        status
+    support comments entire line with #
+
+Spec
+    Prompt
+        : symbol for prompt
+        flush out output buffers each time you print with fflush() after EVERY OUTPUT
+        syntax: command [arg1 arg2] [< input_file] [> output_file] [&]
+        command = words separate by spaces
+        < > & recognized by must be surrounded by spaces, else just seen as normal char
+        Use of < and > must appear after all arguments and be followed by filename
+        & comes at end, if at all
+
+        no quoting --> args w/ spaces not possible
+        no | operator
+        command lines with max 2048 characters
+                           max 512 arguments
+
+        no error-checking on cmd line syntax
+
+        allow blank lines and comments
+        any line beginning with # is comment
+        blank line does nothing
+        re-prompt when receiving blank or comment line
+
+    Commend Execution
+        Use fork(), exec(), and waitpid() to execute commands
+
+        Conceptual
+            let parent proc (your smallsh) to continue running.
+            Whenever non-built in commmand received, have parent fork() off child
+                Forked child does I/O redirection before running exec() on command given
+                After using dup2() to set up redir, redir symbol and redir destination/source are NOT
+                    passed into following exec command (no need to at that point, redir already done)
+            
+            Exec() will fail and return reason if told to exec something it can't do
+                Smallsh should indicate to user that cmd coudn't be exec, set value retrived by built-in
+                    status command to 1...make sure child proc with failed exec call terminates itself, or
+                    else it loops back up to top and tries to become parent...
+
+            Shell should use PATH variable to look for non-built in commands
+            Shell should allow scripts to be executed
+
+            After fork() and before exec(), do I/O redir with dup2()...input file redir via stdin should
+            be opened for reading only...if shell cannot open for read, should print error message and set
+            exit status to 1.
+
+            Output file redir via stdout should be opened for writing only and truncated if already exists
+            or created if does not exist. If shell cannot open output file, should print error message and
+            set exit status to 1
+
+            stdin and stdout for command can be redirected at same time
+
+            expand any $$ into procID of shell itself...no other variable expansion required
+
+        Background and foreground
+            shell should wait() for completion of fg commands before prompting for next command
+            if command was foreground, parent shell does NOT return command line access and control to user
+                until child terminates
+
+                recommend parent call waitpid() on child while it waits
+
+            shell will not wait for background commands to complete...if background proc, parent returns
+            command line access and control to user immediately after forking child
+                ---> need periodically check for b/g child proc to complete with waitpid(...NOHANG...) so 
+                they can be cleaned up as shell continues to run
+
+            store PIDs of non-completed background procs in an array, so they can periodically be checked
+            OR may also use signal handler to immedaitely wait() for child procs that terminate
+
+            print out when these b/g procs have completed just BEFORE command line access and control
+            are returned to user, every time that happens
+
+            b/g commands should get stdin from /dev/null if not specified, send output to /dev/null if
+            no target given
+
+            shell will print procID of b/g proc when it begins
+            when b/g proc terminates, message showing procID and exit status will be printed
+                check to see if any b/g procs completed just before prompting for new command and print
+                this message THEN
+            this way, messages about completed background procs will not appear during other running commands,
+                though user will have to wait until they complete some other command to see those messages
+                ---> this is how C shell and Bourne shells also work
+
+            probably want to use waitpid() to check for completed b/g procs
+
+        Signals
+            CTRL-C command sends SIGINT to parent shell proc and ALL CHILDREN at same time (built into Linux)
+            For this assignment, make sure SIGINT does not terminate your shell, but only terminates f/g
+                command if one is running...
+
+                To do this, create appropriate signal handlers with sigaction().
+                Parent should not attempt to terminate f/g child proc when parent receives SIGINT...
+                    instead f/g child (if any) must terminate ITSELF on receipt of signal
+
+                if child f/g proc killed by signal, parent must immediately print number of signal that killed
+                    its f/g child proc (see example) BEFORE prompting user for next command
+
+                b/g procs should ALSO not be terminated by SIGINT signal - they termi themselves, continue
+                running or term when shell exists
+
+            CTRL-Z sends SIGSTP to parent and all children (built into Linux)
+                When received by shell, must display informative message immediately if sitting at prompt or
+                immediately after any currently running f/g proc terminated
+
+                enter state where subsequent comands no longer run in background...In this state, & operator
+                should be IGNORED - run everything in f/g
+
+                If user sends SIGSTP again, display another message, then return back to normal condition where
+                & operator is honored...
+
+                Use example for usage and exact syntax to be used for these messages
+
+                f/g and b/g child procs should all ignore SIGSTP signal - only shell should react
+
+        Build-in commands
+            don't have to support I/O redirection for these
+            don't need to set exit status
+            only ones shell handles itself - all others passed to member of exec family of functions (up to you)
+            if user trieds to run in b/g, ignore & and run in fg anyway (no error display)
+
+            exit: exits shell. no args. shell MUST KILL any other processes or jobs started
+
+            cd changes working dir. By itself, changes to HOME. Takes 1 arg - path. abs and rel paths. 
+            When smallsh terminates, original shell launched from will still be in its original working dir
+            despite use of chdir() in smallsh. Shell's working dir begins in whatever dir your exe launched
+
+            status prints exit status or term signal of last FOREGROUND proc ran by shell. If run before any
+            fg procs run, returns status 0. should ignore built-in commands

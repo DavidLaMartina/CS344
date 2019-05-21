@@ -1,5 +1,5 @@
-#ifndef INPUT_H
-#define INPUT_H
+#ifndef COMMAND_INPUT_H
+#define COMMAND_INPUT_H
 
 #include "boolean.h"
 

@@ -1,6 +1,6 @@
 /* David LaMartina
  * lamartid@oregonstate.edu
- * Command line input retrieval and parsing
+ * Command line input retrieval and parsing for smallsh
  */
 
 #include <stdlib.h>
@@ -20,7 +20,6 @@ void catchSIGINT( int signo )
     const char* message = "SIGINT. Use CTRL-Z to Stop.\n";
     printSafe( message, STDOUT_FILENO );
 }
-    
 
 // Get input from user via getline and parse individual words into strings.
 // Store strings into passed-in array, whose memory can be managed by caller.

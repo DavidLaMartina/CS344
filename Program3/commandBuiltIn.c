@@ -55,8 +55,10 @@ void printWorkingDirectory()
     char cwd[ 512 ];        // arbitrary max buffer size 512...let's hope you don't have longer dir names!
     if( getcwd( cwd, sizeof( cwd ) ) != NULL ) {
         printf( "Current working directory: %s\n", cwd );
+        fflush( stdout );
     }
     else{
         perror( "getcwd() error" );
+        fflush( stdout );
     }
 }

@@ -143,3 +143,13 @@ char* intToString( int num )
 
     return numString;
 }
+
+enum boolean isStringEmpty( char* str )
+{
+    if ( strcmp( str, "" ) == 0 ){
+        return TRUE;
+    }
+    else{
+        return FALSE;
+    }
+}

@@ -31,4 +31,7 @@ int numDigits( int );
 // Convert integer to string
 char* intToString( int );
 
+// Check whether string is empty
+enum boolean isStringEmpty( char* );
+
 #endif

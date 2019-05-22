@@ -1,0 +1,17 @@
+boolean.h
+commandBuiltIn.c
+commandBuiltIn.h
+commandExec.c
+commandExec.h
+commandInput.c
+commandInput.h
+commandSignals.c
+commandSignals.h
+Makefile
+newFile
+notes.txt
+smallsh
+smallsh.c
+test
+utilities.c
+utilities.h

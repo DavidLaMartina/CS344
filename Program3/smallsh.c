@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
 
     // Child state variables
     int backgroundPIDs[ MAX_CHILDREN ];         // PID array for keeping track of background children
+    int numBackgroundPIDs = 0;                  // Keep track of number of child PIDs for array traversal
     int childExitMethod = DEFAULT_EXIT;         // Most recent foreground exit status
     enum boolean inBackground = FALSE;          // Start w/ assumption child process will be in foreground
 
@@ -103,8 +104,21 @@ int main(int argc, char* argv[])
         }
 
         // If not built-in or blank line, exec command
-        else{}
- 
+        else{
+            execCommand( input,
+                         &childExitMethod,
+                         SIGINT_action,
+                         inBackground,
+                         backgroundEnabled,
+                         inFileName,
+                         outFileName,
+                         backgroundPIDs,
+                         &numBackgroundPIDs );
+        }
+        // If last executed process was foreground, reset SIGINT handler to ignore
+        if ( inBackground == FALSE ){
+            sigaction( SIGINT, &SIGINT_action, NULL );
+        } 
         // Reset next child state and buffers (but retain background PID array and exit method)
         memset( inFileName,     '\0', MAX_CHARS * sizeof( inFileName[0] ) );
         memset( outFileName,    '\0', MAX_CHARS * sizeof( outFileName[0] ) );

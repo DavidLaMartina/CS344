@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
         for ( i = 0; i < numBackgroundPIDs; i++ ){
             pid_t actualPID = waitpid( -1, &childExitMethod, WNOHANG );
             if ( actualPID > 0 ){
-                printf( "Child %d terminated with ", actualPID );
+                printf( "Child %d: ", actualPID );
                 fflush( stdout );
                 printStatus( childExitMethod );
             }

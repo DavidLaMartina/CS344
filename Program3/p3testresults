@@ -1,0 +1,143 @@
+PRE-SCRIPT INFO
+  Grading Script PID: 39997
+  Note: your smallsh will report a different PID when evaluating $$
+: BEGINNING TEST SCRIPT
+: 
+: --------------------
+: Using comment (5 points if only next prompt is displayed next)
+: : 
+: 
+: --------------------
+: ls (10 points for returning dir contents)
+: boolean.h
+commandBuiltIn.c
+commandBuiltIn.h
+commandExec.c
+commandExec.h
+commandInput.c
+commandInput.h
+commandSignals.c
+commandSignals.h
+junk
+junk2
+Makefile
+newFile
+notes.txt
+p3testresults
+p3testscript
+smallsh
+smallsh.c
+sxcmd.log
+test
+utilities.c
+utilities.h
+: 
+: 
+: --------------------
+: ls out junk
+: : 
+: 
+: --------------------
+: cat junk (15 points for correctly returning contents of junk)
+: boolean.h
+commandBuiltIn.c
+commandBuiltIn.h
+commandExec.c
+commandExec.h
+commandInput.c
+commandInput.h
+commandSignals.c
+commandSignals.h
+junk
+junk2
+Makefile
+newFile
+notes.txt
+p3testresults
+p3testscript
+smallsh
+smallsh.c
+sxcmd.log
+test
+utilities.c
+utilities.h
+: 
+: 
+: --------------------
+: wc in junk (15 points for returning correct numbers from wc)
+:  22  22 258
+: 
+: 
+: --------------------
+: wc in junk out junk2; cat junk2 (10 points for returning correct numbers from wc)
+: :  22  22 258
+: 
+: 
+: --------------------
+: test -f badfile (10 points for returning error value of 1, note extraneous &)
+: : exit value 1
+: 
+: 
+: --------------------
+: wc in badfile (10 points for returning text error)
+: Unable to open file for input. Terminating process.
+: 
+: 
+: --------------------
+: badfile (10 points for returning text error)
+: badfile: No such file or directory.
+: 
+: 
+: --------------------
+: sleep 100 background (10 points for returning process ID of sleeper)
+: background PID is 40074
+: 
+: 
+: --------------------
+: pkill -signal SIGTERM sleep (10 points for pid of killed process, 10 points for signal)
+: (Ignore message about Operation Not Permitted)
+: pkill: killing pid 37289 failed: Operation not permitted
+pkill: killing pid 47255 failed: Operation not permitted
+Child 40074 terminated with terminated by signal 15
+: 
+: 
+: --------------------
+: sleep 1 background (10 pts for pid of bg ps when done, 10 for exit value)
+: background PID is 40091
+: : 
+Child 40091 terminated with exit value 0
+: 
+: --------------------
+: pwd
+: /nfs/stak/users/lamartid/CS344/Programs/Program3
+: 
+: 
+: --------------------
+: cd
+: : 
+: 
+: --------------------
+: pwd (10 points for being in the HOME dir)
+: /nfs/stak/users/lamartid
+: 
+: 
+: --------------------
+: mkdir testdir39998
+: : 
+: 
+: --------------------
+: cd testdir39998
+: : 
+: 
+: --------------------
+: pwd (5 points for being in the newly created dir)
+: /nfs/stak/users/lamartid/testdir39998
+: --------------------
+: background PID is 40194
+: Entering foreground-only mode (& is now ignored)
+: Wed May 22 20:34:13 PDT 2019
+Child 40194 terminated with exit value 0
+Child 40195 terminated with exit value 0
+: : Wed May 22 20:34:19 PDT 2019
+: Exiting foreground-only mode
+: 

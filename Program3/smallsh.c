@@ -12,6 +12,7 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #include "boolean.h"
 #include "utilities.h"
@@ -74,8 +75,8 @@ int main(int argc, char* argv[])
     while (inSession == TRUE)
     {
         // Get user input
-        printf( ": " );
-        fflush( stdout );
+        // printf( ": " );
+        // fflush( stdout );
         getCommand( input,
                     MAX_ARGS,
                     &inBackground,
@@ -99,9 +100,6 @@ int main(int argc, char* argv[])
         else if ( strcmp( input[0], "status" ) == 0 ){
             printStatus( childExitMethod );
         }
-        else if ( strcmp( input[0], "pwd" ) == 0 ){
-            printWorkingDirectory();
-        }
 
         // If not built-in or blank line, exec command
         else{
@@ -115,6 +113,17 @@ int main(int argc, char* argv[])
                          backgroundPIDs,
                          &numBackgroundPIDs );
         }
+        // Check all background process for termination before returning to prompt
+        int i;
+        for ( i = 0; i < numBackgroundPIDs; i++ ){
+            pid_t actualPID = waitpid( -1, &childExitMethod, WNOHANG );
+            if ( actualPID > 0 ){
+                printf( "Child %d terminated with ", actualPID );
+                fflush( stdout );
+                printStatus( childExitMethod );
+            }
+        }
+
         // If last executed process was foreground, reset SIGINT handler to ignore
         if ( inBackground == FALSE ){
             sigaction( SIGINT, &SIGINT_action, NULL );

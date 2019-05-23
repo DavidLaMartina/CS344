@@ -50,10 +50,11 @@ void execCommand( char** command,                   // Parsed array of strings r
                 SIGINT_action.sa_handler = SIG_DFL;
                 sigaction( SIGINT, &SIGINT_action, NULL );
             }
+
             // Redirect input & output as needed; non-used inFile / outFile names will be empty
             // No redirection will occur if foreground process w/ no files specified
             redirInput( inFileName, inBackground, backgroundEnabled );
-            redirOutput( outFileName, inBackground, backgroundEnabled ); 
+            redirOutput( outFileName, inBackground, backgroundEnabled );
 
             // Execute using redirects created by dup2() calls
             if ( execvp( command[0], command ) < 0 ){
@@ -76,18 +77,23 @@ void execCommand( char** command,                   // Parsed array of strings r
             // Else run in foreground by waiting for child termination to re-prompt 
             else{
                 pid_t actualPID = waitpid( spawnPID, childExitMethod, 0 );
+                
+                // If child terminates due to SIGINT, print status
+                if ( WIFSIGNALED( *childExitMethod ) ){
+                    printStatus( *childExitMethod );
+                }
             }
 
         // Check all background processes for termination before returning to prompt
-        int i;
-        for ( i = 0; i < *numBackgroundPIDs; i++ ){
-            pid_t actualPID = waitpid( -1, childExitMethod, WNOHANG );
-            if ( actualPID > 0 ){
-                printf( "Child %d terminated\n", actualPID );
-                printStatus( *childExitMethod );
-                fflush( stdout );
-            }
-        }
+        // int i;
+        // for ( i = 0; i < *numBackgroundPIDs; i++ ){
+        //     pid_t actualPID = waitpid( -1, childExitMethod, WNOHANG );
+        //     if ( actualPID > 0 ){
+        //         printf( "Child %d terminated\n", actualPID );
+        //         printStatus( *childExitMethod );
+        //         fflush( stdout );
+        //     }
+        // }
     }
 }
 
@@ -100,13 +106,18 @@ void redirInput( char inFileName[],
     if ( strcmp( inFileName, "" ) != 0 ){
         int inFD = open( inFileName, O_RDONLY );
         if ( inFD == -1 ){
-            perror( "Unable to open file for input. Terminating process.\n" );
+            const char* message = "Unable to open file for input. Terminating process.\n";
+            printSafe( message, STDERR_FILENO );
+            // printf( "Unable to open file for input. Terminating process.\n" );
+            // fflush( stdout );
             exit( 1 );
         }
         int result = dup2( inFD, 0 );
         if ( result == -1 ){
-            perror( "Unable to redirect standard input. Exiting.\n" );
-            exit( 1 );
+            const char* message = "Unable to redirect standard input. Exiting\n";
+            printSafe( message, STDERR_FILENO );
+            // perror( "Unable to redirect standard input. Exiting.\n" );
+            // exit( 1 );
         }
         // Designate close on exec
         fcntl( inFD, F_SETFD, FD_CLOEXEC );
@@ -115,13 +126,17 @@ void redirInput( char inFileName[],
     else if ( inBackground == TRUE && backgroundEnabled == TRUE ){
         int inFD = open( "/dev/null", O_RDONLY );
         if ( inFD == -1 ){
-            perror( "This is weird, but /dev/null couldn't be opened for input. Terminating process.\n" );
-            exit( 1 );
+            const char* message = "This is weird, but /dev/null couldn't be opened for input. Terminating process.\n";
+            printSafe( message, STDERR_FILENO );
+            // perror( "This is weird, but /dev/null couldn't be opened for input. Terminating process.\n" );
+            // exit( 1 );
         }
         int result = dup2( inFD, 0 );
         if ( result == -1 ){
-            perror( "This is weird, but the system couldn't read from /dev/null. Exiting.\n" );
-            exit( 1 );
+            const char* message = "This is weird, but the system couldn't read from /dev/null. Exiting.\n";
+            printSafe( message, STDERR_FILENO );
+            // perror( "This is weird, but the system couldn't read from /dev/null. Exiting.\n" );
+            // exit( 1 );
         }
     }
 }
@@ -134,13 +149,17 @@ void redirOutput( char outFileName[],
     if ( strcmp( outFileName, "" ) != 0 ){
         int outFD = open( outFileName, O_WRONLY | O_CREAT | O_TRUNC, 0644 );
         if ( outFD == -1 ){
-            perror( "Unable to open file for output. Terminating process.\n" );
-            exit( 1 );
+            const char* message = "Unable to open file for output. Terminating process.\n";
+            printSafe( message, STDERR_FILENO );
+            // perror( "Unable to open file for output. Terminating process.\n" );
+            // exit( 1 );
         }
         int result = dup2( outFD, 1 );
         if ( result == -1 ){
-            perror( "Unable to redirect standard output. Exiting.\n" );
-            exit( 1 );
+            const char* message = "Unable to redirect standard output. Exiting.\n";
+            printSafe( message, STDERR_FILENO );
+            // perror( "Unable to redirect standard output. Exiting.\n" );
+            // exit( 1 );
         }
         // Designate close on exec
         fcntl( outFD, F_SETFD, FD_CLOEXEC );
@@ -149,13 +168,17 @@ void redirOutput( char outFileName[],
     else if ( inBackground == TRUE && backgroundEnabled == TRUE ){
         int outFD = open( "/dev/null", O_WRONLY );
         if ( outFD == -1 ){
-            perror( "This is weird, but /dev/null couldn't be opened for output. Terminating process.\n" );
-            exit( 1 );
+            const char* message = "This is weird, but /dev/null couldn't be opened for output. Terminating process.\n";
+            printSafe( message, STDERR_FILENO );
+            // perror( "This is weird, but /dev/null couldn't be opened for output. Terminating process.\n" );
+            // exit( 1 );
         }
         int result = dup2( outFD, 1 );
         if ( result == -1 ){
-            perror( "This is weird, but the system couldn't write to /dev/null. Exiting.\n" );
-            exit( 1 );
+            const char* message = "This is weird, but the system couldn't write to /dev/null. Exiting.\n";
+            printSafe( message, STDERR_FILENO );
+            // perror( "This is weird, but the system couldn't write to /dev/null. Exiting.\n" );
+            // exit( 1 );
         }
     }
 }

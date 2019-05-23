@@ -86,7 +86,8 @@ char* getInputLine()
 {
     // Set up SIGINT handler for interruptions and avoidance of stuck errors
     struct sigaction SIGINT_action = {0};
-    SIGINT_action.sa_handler = catchSIGINT;
+    // SIGINT_action.sa_handler = catchSIGINT;
+    SIGINT_action.sa_handler = SIG_IGN;
     sigfillset( &SIGINT_action.sa_mask );
     sigaction( SIGINT, &SIGINT_action, NULL );
 
@@ -96,6 +97,10 @@ char* getInputLine()
  
     // Loop to ensure entire input is gathered, even in case of interrupt
     while( 1 ){
+        // prompt each time
+        printf( ": " );
+        fflush( stdout );
+
         numCharsEntered = getline( &lineEntered, &bufferSize, stdin );  // Get characters from user + \n + \0
         if ( numCharsEntered < 0 )
             clearerr( stdin );

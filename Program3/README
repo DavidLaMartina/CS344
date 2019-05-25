@@ -1,0 +1,12 @@
+/* David LaMartina
+ * lamartid@oregonstate.edu
+ * Program 3: smallsh
+ * CS344 Spr2019
+ * Due May 26, 2019
+ */
+
+To compile smallsh, type "make" on the command line in the directory containing smallsh.c.
+As long as all included files remain in the target unzip location, the Makefile will incorporate
+all necessary files.
+
+To delete the executable smallsh, type "make clean".

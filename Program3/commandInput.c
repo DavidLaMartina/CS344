@@ -1,6 +1,8 @@
 /* David LaMartina
  * lamartid@oregonstate.edu
- * Command line input retrieval and parsing for smallsh
+ * Command line input retrieval and parsing for Program 3: smallsh
+ * CS344 Spr2019
+ * Due May 26, 2019
  */
 
 #include <stdlib.h>
@@ -82,6 +84,8 @@ void getCommand( char** linesArr,
     free( shellPIDString );
 }
 
+// Input-fetching function
+// Adapted from 3.3 Advanced User Input with getline()
 char* getInputLine()
 {
     // Set up SIGINT handler for interruptions and avoidance of stuck errors

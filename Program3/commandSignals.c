@@ -1,7 +1,8 @@
 /* David LaMartina
  * lamartid@oregonstate.edu
  * CS344 Spr2019
- * Signal handling for smallsh
+ * Signal handling for Program 3: smallsh
+ * Due May 26, 2019
  */
 
 #include <stdlib.h>

@@ -1,3 +1,10 @@
+/* David LaMartina
+ * lamartid@oregonstate.edu
+ * Simple utilities for Program 3: smallsh
+ * CS344 Spr2019
+ * Due May 26, 2019
+ */
+
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
@@ -28,8 +35,8 @@ char* replaceWord( const char*, const char*, const char* );
 // Determine number of digits in integer (Required for int - string conversion)
 int numDigits( int );
 
-// Convert integer to string
-char* intToString( int );
+// Convert integer to string for $$ expansion
+char* intToString( int num );
 
 // Check whether string is empty
 enum boolean isStringEmpty( char* );

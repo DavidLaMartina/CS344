@@ -74,9 +74,6 @@ int main(int argc, char* argv[])
 
     while (inSession == TRUE)
     {
-        // Get user input
-        // printf( ": " );
-        // fflush( stdout );
         getCommand( input,
                     MAX_ARGS,
                     &inBackground,
@@ -84,41 +81,42 @@ int main(int argc, char* argv[])
                     outFileName,
                     shellPID,
                     MAX_CHARS );
-        // getCommand( input, &inBackground, inFile, outFile, );
-        // *** SET SIGINT HANDLER BACK TO NORMAL AFTER THIS
 
-        // Check if comment or blank line
-        if ( canIgnore( input ) ) {}
+        // If input is not a blank line or comment, proceed with either built-in or executable
+        //if ( canIgnore( input ) ) {}
+        if ( !canIgnore( input ) ){
+            // Check built-ins
+            if ( strcmp( input[0], "exit" ) == 0 ){
+                inSession = FALSE;
+            }
+            else if ( strcmp( input[0], "cd" ) == 0 ){
+                changeDirectory( input[1] );
+            }
+            else if ( strcmp( input[0], "status" ) == 0 ){
+                printStatus( childExitMethod );
+            }
 
-        // Check built-ins
-        else if ( strcmp( input[0], "exit" ) == 0 ){
-            inSession = FALSE;
-        }
-        else if ( strcmp( input[0], "cd" ) == 0 ){
-            changeDirectory( input[1] );
-        }
-        else if ( strcmp( input[0], "status" ) == 0 ){
-            printStatus( childExitMethod );
+            // If not built-in or blank line, exec command
+            else{
+                execCommand( input,
+                             &childExitMethod,
+                             SIGINT_action,
+                             inBackground,
+                             backgroundEnabled,
+                             inFileName,
+                             outFileName,
+                             backgroundPIDs,
+                             &numBackgroundPIDs );
+            }
         }
 
-        // If not built-in or blank line, exec command
-        else{
-            execCommand( input,
-                         &childExitMethod,
-                         SIGINT_action,
-                         inBackground,
-                         backgroundEnabled,
-                         inFileName,
-                         outFileName,
-                         backgroundPIDs,
-                         &numBackgroundPIDs );
-        }
         // Check all background process for termination before returning to prompt
+        // ***This happens whether or not the input command was ignored
         int i;
         for ( i = 0; i < numBackgroundPIDs; i++ ){
             pid_t actualPID = waitpid( -1, &childExitMethod, WNOHANG );
             if ( actualPID > 0 ){
-                printf( "Child %d: ", actualPID );
+                printf( "Background child %d: ", actualPID );
                 fflush( stdout );
                 printStatus( childExitMethod );
             }
@@ -132,6 +130,7 @@ int main(int argc, char* argv[])
         memset( inFileName,     '\0', MAX_CHARS * sizeof( inFileName[0] ) );
         memset( outFileName,    '\0', MAX_CHARS * sizeof( outFileName[0] ) );
         nullifyStringArray( input, MAX_ARGS );
+        freeStringArray( input, MAX_ARGS );
         inBackground = FALSE;
     }
 

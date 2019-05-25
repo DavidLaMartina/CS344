@@ -1,7 +1,8 @@
 /* David LaMartina
  * lamartid@oregonstate.edu
  * CS344 Spr2019
- * Built-in commands for smallsh
+ * Built-in commands for Program 3: smallsh
+ * Due May 26, 2019
  */
 
 #ifndef COMMAND_BUILTIN_H
@@ -12,8 +13,5 @@ void changeDirectory( char* );
 
 // If user enters "status", prints appropriate exit status OR signal
 void printStatus( int );
-
-// Diagnostic directory printing function
-void printWorkingDirectory();
 
 #endif

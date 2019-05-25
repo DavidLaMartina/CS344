@@ -1,6 +1,8 @@
 /* David LaMartina
  * lamartid@oregonstate.edu
- * Simple utilities for Program 3
+ * Simple utilities for Program 3: smallsh
+ * CS344 Spr2019
+ * Due May 26, 2019
  */
 
 #include <stdio.h>
@@ -63,9 +65,9 @@ void printSafe( const char* message, int location )
 // Credit: https://www.geeksforgeeks.org/c-program-replace-word-text-another-given-word/
 char* replaceWord( const char* original, const char* oldWord, const char* newWord )
 {
-    char *result;       // Will hold result (allocated memory)
-    int i;              // index variable
-    int count = 0;      // count of old word instances to be replaced
+    char *result;                           // Will hold result (allocated memory)
+    int i;                                  // index variable
+    int count = 0;                          // count of old word instances to be replaced
 
     int newWordLength = strlen( newWord );  // Track lengths to allocate memory properly
     int oldWordLength = strlen( oldWord );
@@ -114,21 +116,6 @@ int numDigits( int num )
     }
     return count;
 }
-
-// Convert an integer to a string
-// Requires a passed-in buffer - This keeps memory allocation responsibility on the caller
-// Credit: https://stackoverflow.com/questions/8257714/how-to-convert-an-int-to-string-in-c
-// void intToString( int num, char* buf )
-// {
-//     // First memset to null to ensure digit string will be null-terminated
-//     memset( buf, '\0', strlen( buf ) * sizeof( char ) );
-// 
-//     // Get max number of bytes to write with numDigits
-//     int maxBytes = sizeof( char ) * ( numDigits( num ) + 1 );   // +1 to account for null termiantor
-// 
-//     // Now use snprintf to 
-//     snprintf( buf, maxBytes, "%d", num );
-// }
 
 char* intToString( int num )
 {

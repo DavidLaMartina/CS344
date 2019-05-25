@@ -1,12 +1,12 @@
 /* David LaMartina
  * lamartid@oregonstate.edu
  * CS344 Spr2019
- * Built-in commands for smallsh
+ * Built-in commands for Program 3: smallsh
+ * Due May 26, 2019
  */
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <signal.h>
 #include <unistd.h>
 
@@ -35,30 +35,13 @@ void changeDirectory( char* path )
 void printStatus( int childExitMethod )
 {
     if ( WIFEXITED( childExitMethod ) ){
-        printf( "exit value %d\n",
-                WEXITSTATUS( childExitMethod ) );
+        printf( "exit value %d\n", WEXITSTATUS( childExitMethod ) );
         fflush( stdout );
     }
     // Could be an else statement, but we're being extra careful before
     // invoking the WTERMSIG macro
     else if ( WIFSIGNALED( childExitMethod ) ){
-        printf( "terminated by signal %d\n",
-                WTERMSIG( childExitMethod ) );
-        fflush( stdout );
-    }
-}
-
-// Print current working directory: diagnostic to ensure
-// cd is working correctly!
-void printWorkingDirectory()
-{
-    char cwd[ 512 ];        // arbitrary max buffer size 512...let's hope you don't have longer dir names!
-    if( getcwd( cwd, sizeof( cwd ) ) != NULL ) {
-        printf( "Current working directory: %s\n", cwd );
-        fflush( stdout );
-    }
-    else{
-        perror( "getcwd() error" );
+        printf( "terminated by signal %d\n", WTERMSIG( childExitMethod ) );
         fflush( stdout );
     }
 }

@@ -43,4 +43,7 @@ enum boolean isStringEmpty( char* );
 // Print error message
 void error( const char* );
 
+// Get number of characters in a file
+int fileNumChars( const char* fileName );
+
 #endif

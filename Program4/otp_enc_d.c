@@ -19,6 +19,9 @@
 
 #define MAX_CONNECTIONS     5
 
+// Prototype for handling actual connections & encryptions in child procs
+void handleConnection( int );
+
 int main( int argc, char* argv[] )
 {
     // Require port argument
@@ -30,9 +33,7 @@ int main( int argc, char* argv[] )
     int listenSocketFD,                 // Socket to listen for client connections
         establishedConnectionFD,        // Socket for connecting to client
         portNumber;                     // Port to run server (this daemon)
-        // charsRead
     socklen_t sizeOfClientInfo;         // Amount of info coming from client
-    // char buffer[ 256 ];
     struct sockaddr_in serverAddress,   // Daemon's identifier
                        clientAddress;   // Client's identifier
    
@@ -67,6 +68,7 @@ int main( int argc, char* argv[] )
         // Opening new connection depends on # existing connections;
         // Check number of child processes against max, updating as needed.
         while( waitpid( -1, &childExitMethod, WNOHANG ) > 0 ){
+            printf( "A child died!\n" );
             numConnections--;
         }
         // If < max connections exist, accept next client connection
@@ -91,8 +93,9 @@ int main( int argc, char* argv[] )
                     break;
 
                 case 0:                                                 // Child --> do business logic
-                    printf( "You're in the child!\n" );
-                    exit( 0 );
+                    handleConnection( establishedConnectionFD );
+                    //printf( "You're in the child!\n" );
+                    //exit( 0 );
                     break;
 
                 default:                                                // Parent --> increment child count
@@ -107,6 +110,11 @@ int main( int argc, char* argv[] )
         }
     }
 
+    printf( "We got our of here!\n" );
     close( listenSocketFD );                                            // Close listening socket
     return 0;
+}
+
+void handleConnection( int socketFD )
+{
 }

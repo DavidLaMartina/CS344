@@ -147,3 +147,27 @@ void error( const char* msg )
     // perror( msg );
     exit( 1 );
 }
+
+// Get number of characters in a file
+// Credit: http://www.java2s.com/Code/C/File/Countthenumberofcharactersinafile.htm
+int fileNumChars( const char* fileName )
+{
+    int count = 0;
+    FILE* fd;
+
+    fd = fopen( fileName, "r" );
+    if( fd == NULL ){
+        fprintf( stderr, "Cannot open %s\n", fileName );
+        exit( 1 );
+    }
+
+    int ch;
+    while( 1 ){
+        ch = getc( fd );
+        if( ch == EOF )
+            break;
+        count++;
+    }
+    fclose( fd );
+    return count;
+}

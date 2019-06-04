@@ -16,9 +16,7 @@
 #include <time.h>
 #include <string.h>
 
-#define CHAR_CODE_LENGTH        27
-
-const char charList[ CHAR_CODE_LENGTH ] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
+#include "otp.h"
 
 int main(int argc, char* argv[])
 {
@@ -33,11 +31,12 @@ int main(int argc, char* argv[])
     memset( key, '\0', length + 1 );                        // Avoid garbage
 
     srand( time(0) );                                       // Seed random number generator
+    char* charList = CHAR_LIST;
 
     // Fill array with random characters and finish with newline
     int i;
     for( i = 0; i < length; i++ ){
-        key[ i ] = charList[ rand() % CHAR_CODE_LENGTH ];
+        key[ i ] = charList[ rand() % CHAR_LIST_LENGTH ];
     }
     key[ length ] = '\n';
 

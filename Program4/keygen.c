@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     // Fill array with random characters and finish with newline
     int i;
     for( i = 0; i < length; i++ ){
-        key[ i ] = charList[ rand() % CHAR_LIST_LENGTH ];
+        key[ i ] = charList[ rand() % strlen( charList ) ];
     }
     key[ length ] = '\n';
 

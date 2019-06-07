@@ -38,6 +38,18 @@ void stripNewline( char* buf )
     buf[ strcspn( buf, "\n" ) ] = '\0';
 }
 
+// Put newline "back" in place of null terminator
+void replaceNewline( char* buf )
+{
+    buf[ strcspn( buf, "\0" ) ] = '\n';
+}
+
+// Replace first instance of one character with another
+void replaceChar( char* buf, char* old, char new )
+{
+    buf[ strcspn( buf, old ) ] = new;
+}
+
 // Validate characters in a buffer against set of acceptable characters
 enum boolean validateChars( char* buf, int bufSize, char* validChars, int validCharsSize )
 {

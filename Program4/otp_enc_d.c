@@ -16,11 +16,14 @@
 #include <netinet/in.h>
 
 #include "utilities.h"
+#include "textHandle.h"
+#include "otp.h"
 
-#define MAX_CONNECTIONS     5
+#define MAX_CONNECTIONS     5           // max concurrent connections
+#define CHUNK_SIZE          1000        // chunk size for receiving data from client
 
 // Prototype for handling actual connections & encryptions in child procs
-void handleConnection( int );
+void encrypt( int );
 
 int main( int argc, char* argv[] )
 {
@@ -93,9 +96,7 @@ int main( int argc, char* argv[] )
                     break;
 
                 case 0:                                                 // Child --> do business logic
-                    handleConnection( establishedConnectionFD );
-                    //printf( "You're in the child!\n" );
-                    //exit( 0 );
+                    encrypt( establishedConnectionFD );
                     break;
 
                 default:                                                // Parent --> increment child count
@@ -110,11 +111,83 @@ int main( int argc, char* argv[] )
         }
     }
 
-    printf( "We got our of here!\n" );
     close( listenSocketFD );                                            // Close listening socket
     return 0;
 }
 
-void handleConnection( int socketFD )
+void encrypt( int socketFD )
 {
+    int charsRead,          // Characters read from packet; must be checked against 0
+        charsSum,           // Sum of characters from multiple packets
+        charsWritten,       // Check to ensure all characters have been sent to client
+        msgSize;            // Size of total message -- need to get this first!
+
+    // Check identity of client (We know first message sent is identifying character)
+    // If wrong program, write error message to be interpreted for output on client side
+    char* clientChar = calloc( 1, sizeof(char) );               // Need char buffer to hold 1 char
+    charsRead = recv( socketFD, clientChar, sizeof(char), 0 );
+    if( charsRead < 0 ){
+        error( "SERVER: ERROR reading client ID from socket" );
+    }
+    if( clientChar[0] != OTP_ENC_ID ){
+        charsWritten = send( socketFD, OTP_BAD_CT, strlen( OTP_BAD_CT ), 0 );
+        if( charsWritten < 0 ){
+            error( "SERVER: ERROR writing bad connection error to socket" );
+        }
+        close( socketFD );  // Close down connection if client is unauthorized
+        exit( 0 );          // Server can exit successfully here; client's 'fault' for making bad connect
+    }
+
+    // Get the total size of the message to determine buffer length
+    // Credit: http://forums.codeguru.com/showthread.php?492913-Winsock-send()-Integers
+    charsRead  = recv( socketFD, (char* )&msgSize, sizeof(int), 0 );
+    if( charsRead < 0 ){
+        error( "SERVER: ERROR reading message size from socket" );
+    }
+ 
+    // Instantiate buffers for message and key based on received length
+    char* msgBuffer     = calloc( msgSize, sizeof(char) );
+    char* txtBuffer     = calloc( msgSize / 2, sizeof(char) );
+    char* keyBuffer     = calloc( msgSize / 2, sizeof(char) );
+    char* cipherBuffer  = calloc( msgSize, sizeof(char) );
+
+    // Read in plain text and key as one large message - necessary because breaking up into
+    // segments removes our ability to differentiate until we have the whole thing.
+    // Must provide the address of the current spot in the array on each iteration! Otherwise
+    // multiple iterations will override the priors, never exceeding a CHUNK_SIZE segment in length.
+    charsSum = 0;
+    do{
+        charsRead = recv( socketFD, &(msgBuffer[ charsSum ]), CHUNK_SIZE, 0 );
+        charsSum += charsRead;
+        if( charsRead < 0 ){
+            error( "SERVER: ERROR reading message from socket" );
+        }
+    }while( charsSum < msgSize );
+
+    // Split plain text and key - we can assume they're each exactly half the message buffer,
+    // and we know they were sent in order 1. plain text 2. key
+    memcpy( txtBuffer, msgBuffer, (msgSize / 2 ) * sizeof(char) );
+    memcpy( keyBuffer, &(msgBuffer[ msgSize / 2 ]), (msgSize / 2 ) * sizeof(char) );
+    
+    // Encrypt message with key, storing result in cipher buffer
+    char* charList = CHAR_LIST;                                     // Our char list stored in otp.h as macro
+    otpEncrypt( txtBuffer, keyBuffer, cipherBuffer, charList );     // Encrypt
+    // replaceNewline( cipherBuffer );                              // Put newline 'back' in place of '\0'
+
+    // Send cipher back to client
+    charsWritten = send( socketFD, cipherBuffer, msgSize / 2, 0 );  // Send back w/ known size
+    if( charsWritten < 0 ){
+        error( "SERVER: ERROR writing cipher text to socket" );
+    }
+
+    // Clean up
+    free( clientChar );
+    free( msgBuffer );
+    free( txtBuffer );
+    free( keyBuffer );
+    free( cipherBuffer );
+
+    // Exit successfully after all messages properly received and sent
+    close( socketFD );
+    exit( 0 );
 }

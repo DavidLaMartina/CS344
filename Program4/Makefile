@@ -12,8 +12,8 @@ all: otp_enc otp_enc_d otp_dec otp_dec_d keygen
 otp_enc: otp_enc.c utilities.c textHandle.c
 	$(CC) $(CFLAGS) -o otp_enc otp_enc.c utilities.c textHandle.c
 
-otp_enc_d: otp_enc_d.c utilities.c
-	$(CC) $(CFLAGS) -o otp_enc_d otp_enc_d.c utilities.c
+otp_enc_d: otp_enc_d.c utilities.c textHandle.c otp.c
+	$(CC) $(CFLAGS) -o otp_enc_d otp_enc_d.c utilities.c textHandle.c otp.c
 
 otp_dec:
 	$(CC) $(CFLAGS) -o otp_dec otp_dec.c

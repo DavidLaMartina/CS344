@@ -43,7 +43,10 @@ int main( int argc, char* argv[] )
     struct  hostent* serverHostInfo;    // Server info used to make connection
 
     // Buffer for sending characters
-    int     numChars = fileNumChars( textFileName );                    // Get num chars in file (including \n)
+    int     numChars  = fileNumChars( textFileName );                   // Get num chars in file (including \n)
+    int     msgSize   = numChars * 2;                                   // Total message size (both buffers)
+    char*   progID    = (char*)calloc( 1,        sizeof(char) );        // Buffer for program ID
+    memset( progID, OTP_ENC_ID, 1 * sizeof(char) );                     // Set to proper ID character
     char*   msgBuffer = (char*)calloc( numChars, sizeof(char) );        // Buffer for plainText message
     memset( msgBuffer, '\0', numChars * sizeof(char) );                 // Clear garbage
     char*   keyBuffer = (char*)calloc( numChars, sizeof(char) );        // Buffer for key ( same length as text )
@@ -74,47 +77,60 @@ int main( int argc, char* argv[] )
     }
 
     // Read in text to buffers and validate
-    char* validChars    = CHAR_LIST;                                    // Character list from otp.h
-    enum boolean valid  = FALSE;                                        // Chars in buffer (from file) must only match validChars
+    char* validChars    = CHAR_LIST;                        // Character list from otp.h
+    enum boolean valid  = FALSE;                            // Chars in buffer (from file) must only match validChars
 
     readIn( msgBuffer, numChars, textFileName );
     stripNewline( msgBuffer );
-    valid = validateChars( msgBuffer, numChars, validChars, strlen( validChars ) );
-    
+    valid = validateChars( msgBuffer, numChars, validChars, strlen( validChars ) ); 
     if( valid == FALSE ){
         fprintf( stderr, "The file %s contains invalid characters. Exiting.\n", textFileName );
         exit( 1 );
     }
-    printf( "msgBuffer: %s\n", msgBuffer );
 
     readIn( keyBuffer, numChars, keyFileName );
     stripNewline( keyBuffer );
     valid = validateChars( keyBuffer, numChars, validChars, strlen( validChars ) );
-
     if( valid == FALSE ){
         fprintf( stderr, "The file %s contains invalid characters. Exiting.\n", keyFileName );
         exit( 1 );
     }
-    printf( "keyBuffer: %s\n", keyBuffer );
- 
-    // Send plaintext and key to server
-    // Use while loop to ensure all bytes sent in case of interrupt
-    do{
-        charsWritten = send( socketFD, msgBuffer, strlen( msgBuffer ), 0 );         // Send message to daemon
-        if( charsWritten < 0 ){                                                     // Error check
-            error( "CLIENT: ERROR writing message to socket" );
-        }
-    }while( charsWritten < strlen( msgBuffer ) );
 
-    do{
-        charsWritten = send( socketFD, msgBuffer, strlen( keyBuffer ), 0 );         // Send key to daemon
-        if( charsWritten < 0 ){
-            error( "CLIENT: ERROR writing key to socket" );
-        }
-    }while( charsWritten < strlen( keyBuffer ) );
+    // Send program ID, buffer size, plaintext, and key to server
+    // Use numChars, not strlen(), to ensure '\0' is also sent!
+    // Need to send everything in big numChars * 2 size package, to be separated on server side
+    // Sending ints across socket: http://forums.codeguru.com/showthread.php?492913-Winsock-send()-Integers
+    charsWritten = send( socketFD, progID, 1 * sizeof(char), 0 );
+    if( charsWritten < 0 ){
+        error( "CLIENT: ERROR writing program ID to socket" );
+    }
+    charsWritten = send( socketFD, (char*)&msgSize, sizeof(int), 0 );
+    if( charsWritten < 0 ){
+        error( "CLIENT: ERROR writing message length to socket" );
+    }
+    charsWritten = send( socketFD, msgBuffer, numChars, 0 );
+    if( charsWritten < 0 ){
+        error( "CLIENT: ERROR writing message to socket" );
+    }
+    charsWritten = send( socketFD, keyBuffer, numChars, 0 );
+    if( charsWritten < 0 ){
+        error( "CLIENT: ERROR writing key to socket" );
+    } 
 
     // Get response from daemon & output
+    memset( msgBuffer, '\0', numChars * sizeof(char) );                     // Empty out buffer
+    charsRead = recv( socketFD, msgBuffer, numChars * sizeof(char), 0 );    // Get message
+    if( charsRead < 0 ){
+        error( "CLIENT: ERROR reading cipher from socket" );
+    }
+    printf( "%s\n", msgBuffer );        // Output cipher including newline
 
+    // Clean up
     close( socketFD );
+
+    free( progID    );
+    free( msgBuffer );
+    free( keyBuffer );
+
     return 0;
 }

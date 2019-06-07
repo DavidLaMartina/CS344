@@ -23,6 +23,13 @@ void readIn( char*, int, char* );
 // Replace ending newline with null terminator
 void stripNewline( char* );
 
+// Replace ending newline with other character
+void replaceNewline( char* );
+
+// Replace first instance of one character with another
+// Old 'character' must be passed in as string
+void replaceChar( char*, char*, char );
+
 // Validate characters in a buffer against set of acceptable characters
 enum boolean validateChars( char*, int, char*, int );
 

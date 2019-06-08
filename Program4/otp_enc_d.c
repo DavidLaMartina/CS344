@@ -71,7 +71,7 @@ int main( int argc, char* argv[] )
         // Opening new connection depends on # existing connections;
         // Check number of child processes against max, updating as needed.
         while( waitpid( -1, &childExitMethod, WNOHANG ) > 0 ){
-            printf( "A child died!\n" );
+            // printf( "A child died!\n" );
             numConnections--;
         }
         // If < max connections exist, accept next client connection

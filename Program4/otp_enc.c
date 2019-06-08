@@ -42,9 +42,17 @@ int main( int argc, char* argv[] )
     struct  sockaddr_in serverAddress;  // Socket address of server
     struct  hostent* serverHostInfo;    // Server info used to make connection
 
-    // Buffer for sending characters
+    // Length of message and key - check for length
     int     numChars  = fileNumChars( textFileName );                   // Get num chars in file (including \n)
+    int     keyChars  = fileNumChars( keyFileName );                    // Get num chars in key (including \n)
     int     msgSize   = numChars * 2;                                   // Total message size (both buffers)
+
+    if( keyChars < numChars ){
+        fprintf( stderr, "CLIENT: ERROR Key '%s' is too short\n", keyFileName );
+        exit( 1 );
+    }
+
+    // Buffers for sending characters
     char*   progID    = (char*)calloc( 1,        sizeof(char) );        // Buffer for program ID
     memset( progID, OTP_ENC_ID, 1 * sizeof(char) );                     // Set to proper ID character
     char*   msgBuffer = (char*)calloc( numChars, sizeof(char) );        // Buffer for plainText message
@@ -78,13 +86,13 @@ int main( int argc, char* argv[] )
 
     // Read in text to buffers and validate
     char* validChars    = CHAR_LIST;                        // Character list from otp.h
-    enum boolean valid  = FALSE;                            // Chars in buffer (from file) must only match validChars
+    enum boolean valid  = FALSE;                            // Chars in buffer (from file) must match valid chars
 
     readIn( msgBuffer, numChars, textFileName );
     stripNewline( msgBuffer );
     valid = validateChars( msgBuffer, numChars, validChars, strlen( validChars ) ); 
     if( valid == FALSE ){
-        fprintf( stderr, "The file %s contains invalid characters. Exiting.\n", textFileName );
+        fprintf( stderr, "CLIENT: ERROR The file %s contains invalid characters. Exiting.\n", textFileName );
         exit( 1 );
     }
 
@@ -92,7 +100,7 @@ int main( int argc, char* argv[] )
     stripNewline( keyBuffer );
     valid = validateChars( keyBuffer, numChars, validChars, strlen( validChars ) );
     if( valid == FALSE ){
-        fprintf( stderr, "The file %s contains invalid characters. Exiting.\n", keyFileName );
+        fprintf( stderr, "CLIENT: ERROR The file %s contains invalid characters. Exiting.\n", keyFileName );
         exit( 1 );
     }
 

@@ -19,7 +19,7 @@ otp_dec: otp_dec.c utilities.c textHandle.c
 	$(CC) $(CFLAGS) -o otp_dec otp_dec.c utilities.c textHandle.c
 
 otp_dec_d: otp_dec_d.c utilities.c textHandle.c otp.c
-	$(CC) $(CFLAGS) -o otp_dec_d otp_dec_d.c
+	$(CC) $(CFLAGS) -o otp_dec_d otp_dec_d.c utilities.c textHandle.c otp.c
 
 keygen:
 	$(CC) $(CFLAGS) -o keygen keygen.c

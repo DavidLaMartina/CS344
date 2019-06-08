@@ -54,14 +54,14 @@ int main( int argc, char* argv[] )
     // Set up socket
     listenSocketFD = socket( AF_INET, SOCK_STREAM, 0 );                 // Create socket
     if( listenSocketFD < 0 ){
-        error( "ERROR opening socket." );
+        error( "SERVER: ERROR opening socket." );
     }
 
     // Enable socket to begin listening
     if ( bind( listenSocketFD,                                          // Connect socket to port
                (struct sockaddr *)&serverAddress,
                sizeof( serverAddress ) ) < 0 ){
-        error( "ERROR on binding" );
+        error( "SERVER: ERROR on binding" );
     }
     listen( listenSocketFD, 5 );                                        // Flip socket on w/ queue of 5
 
@@ -82,7 +82,7 @@ int main( int argc, char* argv[] )
                                               (struct sockaddr *)&clientAddress,
                                               &sizeOfClientInfo );      // Accept
             if( establishedConnectionFD < 0 ){
-                error( "ERROR on accept" );
+                error( "SERVER: ERROR on accept" );
             }
             // Fork accepted connection
             pid_t spawnPID  = -5;                                        // start w/ nonsense to check against
@@ -149,7 +149,7 @@ void encrypt( int socketFD )
     char* msgBuffer     = calloc( msgSize, sizeof(char) );
     char* txtBuffer     = calloc( msgSize / 2, sizeof(char) );
     char* keyBuffer     = calloc( msgSize / 2, sizeof(char) );
-    char* cipherBuffer  = calloc( msgSize, sizeof(char) );
+    char* cipherBuffer  = calloc( msgSize / 2, sizeof(char) );
 
     // Read in plain text and key as one large message - necessary because breaking up into
     // segments removes our ability to differentiate until we have the whole thing.

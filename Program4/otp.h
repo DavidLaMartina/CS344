@@ -18,10 +18,7 @@
 
 // Bad connection flag -- sent from server to access-restricted client
 #define OTP_BAD_CT          "b"
-
-// End-of-buffer identifying characters
-#define OTP_TEXT_END        '@'
-#define OTP_KEY_END         '#'
+#define OTP_BAD_CT_RESPONSE 'b'
 
 void otpEncrypt( char*, char*, char*, char* );
 

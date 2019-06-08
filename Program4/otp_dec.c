@@ -131,6 +131,11 @@ int main( int argc, char* argv[] )
     if( charsRead < 0 ){
         error( "CLIENT: ERROR reading plain text from socket" );
     }
+    // Check for connection denial message before attempting output
+    if( msgBuffer[ 0 ] == OTP_BAD_CT_RESPONSE ){
+        fprintf( stderr, "CLIENT: ERROR connection denied" );
+        exit( 2 );
+    }
     printf( "%s\n", msgBuffer );        // Output plaintext include newline
 
     // Clean up

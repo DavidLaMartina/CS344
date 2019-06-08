@@ -40,6 +40,10 @@ int main( int argc, char* argv[] )
     struct sockaddr_in serverAddress,   // Daemon's identifier
                        clientAddress;   // Client's identifier
 
+    // Set socket options to reuse
+    int yes = 1;
+    setsockopt( listenSocketFD, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int) );
+
     // Process handling variables
     int numConnections  = 0;            // Current connections; cannot be greater than MAX_CONNECTIONS
     int childExitMethod = -5;           // Begin with nonsense value to check against
